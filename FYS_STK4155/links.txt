@@ -1,0 +1,6 @@
+https://www.kaggle.com/code/bjoernjostein/linear-polynomial-fitting-of-franke-s-function/notebook
+https://www.stratascratch.com/blog/numpy-for-data-science-interviews-part-02/
+https://shivank1006.github.io/blog/2020-03-28-Polynomial_Regression/
+https://compphysics.github.io/MachineLearning/doc/pub/week35/html/week35.html
+https://compphysics.github.io/MachineLearning/doc/pub/week36/html/week36.html
+http://databookuw.com/databook.pdf
