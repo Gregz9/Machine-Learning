@@ -7,15 +7,13 @@ from random import random, seed
 from sklearn.preprocessing import StandardScaler
 
 
-fig = plt.figure()
-fig2 = plt.figure() 
-ax = fig.add_subplot(projection='3d')
-ax2 = fig2.add_subplot(projection='3d')
-
+def generate_data(size): 
 # Making data ingestion to the function
-x = np.arange(0, 1, 0.025)
-y = np.arange(0, 1, 0.025) 
-x, y = np.meshgrid(x,y)
+    x = np.arange(0, 1, 1/size)
+    y = np.arange(0, 1, 1/size) 
+    x, y = np.meshgrid(x,y)
+
+    return x, y
 
 def FrankeFunction(x, y, noise=False):
     term1 = 0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
@@ -64,7 +62,7 @@ def optimal_parameters_inv(X, y):
     return beta
 
 
-def perform_regression(X, beta): 
+def predict(X, beta): 
 
     franke_pred = np.array(())
     for i in range(X.shape[0]):
@@ -74,55 +72,61 @@ def perform_regression(X, beta):
     return franke_pred
     
 def perform_manual_regression(x, y, beta): 
+
     pred = beta[0] + beta[1]*x + beta[2]*y + beta[3]*x**2 + beta[4]*y**2 + beta[5]*x*y
     return pred
 
-X2 = generate_design_matrix(x, y, 5)
-"""print('\n')
-x2 = x.ravel() 
-y2 = y.ravel()
+def R2(y, y_hat): 
+    return 1 - np.sum((y - y_hat)**2) / np.sum((y - np.mean(y_hat))**2)
 
-X3 = np.stack((np.ones(len(x2)), x2, y2, x2**2, y2**2, x2*y2), axis=-1)
-print(X3)
+def MSE(y, y_hat): 
+    return np.sum((y-y_hat)**2)/np.size(y)
 
-print(np.array_equal(X2, X3))
-"""
+def perform_OLS_regression(): 
 
-z = FrankeFunction(x, y) 
+    x, y = generate_data(40)
+ 
+    X2 = generate_design_matrix(x, y, 5)
 
-beta_SVD = compute_optimal_parameters(X2, z)
-beta_INV = optimal_parameters_inv(X2, z)
+    z = FrankeFunction(x, y) 
 
-print(beta_INV)
-print(beta_SVD)
+    beta_SVD = compute_optimal_parameters(X2, z)
+    beta_INV = optimal_parameters_inv(X2, z)
 
-preds_man = perform_manual_regression(x, y, beta_SVD)
-preds = perform_regression(X2, beta_SVD)
-preds = preds.reshape(len(x), len(y))
+    preds = predict(X2, beta_SVD)
+    preds = preds.reshape(len(x), len(y))
 
-"""
-x_and_y = np.hstack((x.ravel().reshape(x.ravel().shape[0],1), y.ravel().reshape(y.ravel().shape[0],1)))
-scaler = StandardScaler()
-scaler.fit(x_and_y)
+    """
+    x_and_y = np.hstack((x.ravel().reshape(x.ravel().shape[0],1), y.ravel().reshape(y.ravel().shape[0],1)))
+    scaler = StandardScaler()
+    scaler.fit(x_and_y)
 
-X_scaled = scaler.transform(x_and_y)
+    X_scaled = scaler.transform(x_and_y)
 
-X = generate_design_matrix(X_scaled.T[0], X_scaled.T[0], 2)
-beta = compute_optimal_parameters(X, z)
-"""
+    X = generate_design_matrix(X_scaled.T[0], X_scaled.T[0], 2)
+    beta = compute_optimal_parameters(X, z)
+    """
 
-# Plot the surface of the function
-surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-surf2 = ax2.plot_surface(x, y, preds, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-# Customization of z-axis
-ax.set_zlim(-0.10, 1.40)
-ax.zaxis.set_major_locator(LinearLocator(10))
-ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    # Plot the surface of the function
+    fig = plt.figure()
+    axs = fig.add_subplot(1, 2, 1, projection='3d')
+    surf = axs.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
-ax2.set_zlim(-0.10, 1.40)
-ax2.zaxis.set_major_locator(LinearLocator(10))
-ax2.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-# Add a color bar which maps values to colors 
-fig.colorbar(surf, shrink=0.5, aspect=5)
-fig2.colorbar(surf, shrink=0.5, aspect=5)
-plt.show()
+    # Customization of z-axis
+    axs.set_zlim(-0.10, 1.40)
+    axs.zaxis.set_major_locator(LinearLocator(10))
+    axs.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    axs.set_title("Frankes's function")
+
+    axs = fig.add_subplot(1, 2, 2, projection='3d')
+    surf = axs.plot_surface(x, y, preds, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    axs.set_zlim(-0.10, 1.40)
+    axs.zaxis.set_major_locator(LinearLocator(10))
+    axs.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    axs.set_title("Polynomial fit of n-th order to Franke's function")
+    # Add a color bar which maps values to colors 
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    #fig2.colorbar(surf, shrink=0.5, aspect=5)
+    plt.show()
+
+perform_OLS_regression()
