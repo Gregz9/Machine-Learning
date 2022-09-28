@@ -4,9 +4,10 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 from random import random, seed
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 import sklearn
+from numpy.core import _asarray, newaxis 
 
 def generate_data(size): 
 # Making data ingestion to the function
@@ -25,10 +26,10 @@ def FrankeFunction(x, y, noise=False):
 
     term4 = -0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
 
-    stoch_noise = 0
+    stoch_noise = np.zeros((len(x),len(x)))
     if noise: 
         stoch_noise = np.random.normal(0, 0.1, len(x)**2)
-        #stoch_noise = stoch_noise.reshape(len(x), len(x))
+        stoch_noise = stoch_noise.reshape(len(x), len(x))
 
     return term1 + term2 + term3 + term4 + stoch_noise
 
@@ -44,18 +45,35 @@ def generate_design_matrix(x, y, order):
             X = np.column_stack((X, x**(i+1), y**(i+1), (x**i)*(y**i)))
     return np.array(X) 
 
-def compute_optimal_parameters(X, y): 
+def compute_optimal_parameters(A, y): 
     # This method uses SVD to compote the optimal parameters beta for OSL.
     # SVD is chosen cause the central matrix of the expression for beta may 
-    # cause problems if it's near-singular or singular. 
+    # cause problems if it's near-singular or singular.
+    U, S, VT = np.linalg.svd(A )#, full_matrices=False)
+     
+    d = np.divide(1.0, S, where=(S!=0))
+    D = np.zeros(A.shape)
+    D[:A.shape[1], :A.shape[1]] = np.diag(d)
 
-    U, S, VT = np.linalg.svd(X, full_matrices=False)
- 
-    #beta = U@S@VT@y.ravel()
-    beta = (VT.T)@(np.linalg.inv(np.diag(S)))@(U.T)@(y.ravel())
-    #beta = (VT.T)@(D)@(U.T)
+    beta = (VT.T)@(D.T)@(U.T)@y.ravel()
+  
     return beta
 
+def _makearray(a):
+    new = _asarray(a)
+    wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
+    return new, wrap
+
+
+def compute_optimal_parameters2(X, y):
+
+    #A = np.linalg.pinv(X.T@X)
+    #beta = A@X.T@y.ravel()
+
+    A = np.linalg.pinv(X)
+    beta = A@y.ravel()
+
+    return beta
 
 def optimal_parameters_inv(X, y): 
     beta = np.linalg.inv(X.T.dot(X)).dot(X.T)
@@ -123,42 +141,38 @@ def create_X(x, y, n ):
 
 def perform_OLS_regression(): 
 
-
-    n_points = 40
+    n_points = 100
+    n = 5
     x, y = generate_data(n_points)
- 
-    X2 = generate_design_matrix(x, y, 2)
+    
+    #for i in range(1, n): 
+
+    X = generate_design_matrix(x, y, n)
     z = FrankeFunction(x, y) 
-    print(z.shape)
-  
-    x_train, x_test, y_train, y_test = train_test_split(X2, z.ravel(), test_size=0.2, shuffle=False)
 
-    beta_SVD = compute_optimal_parameters(X2, z)
-    beta_INV = optimal_parameters_inv(X2, z)
+    x_train, x_test, y_train, y_test = train_test_split(X, z.ravel(), test_size=0.2, shuffle=True, random_state=42)
 
-    preds = predict(X2, beta_SVD)
-    preds = preds.reshape(len(x), len(y))
+    #beta_SVD = compute_optimal_parameters(X, z)
+    #beta_INV = optimal_parameters_inv(X, z)
 
-    beta_SVD_scaled = compute_optimal_parameters(x_train, y_train)
-    preds2 = predict(x_train, beta_SVD_scaled)
+    #preds = predict(X, beta_SVD)
+    #preds = preds.reshape(len(x), len(y))
+
+    #beta_SVD_s = compute_optimal_parameters(x_train, y_train)
+
+    #preds2 = predict(X, beta_SVD_s)
     #preds2 = preds2.reshape(n_points, n_points)
 
-    x_and_y=np.hstack((x.ravel().reshape(x.ravel().shape[0],1),y.ravel().reshape(y.ravel().shape[0],1)))
-    print(x_and_y.shape)
-
-    
-    """
-    x_and_y = np.hstack((x.ravel().reshape(x.ravel().shape[0],1), y.ravel().reshape(y.ravel().shape[0],1)))
     scaler = StandardScaler()
-    scaler.fit(x_and_y)
-
-    X_scaled = scaler.transform(x_and_y)
-
-    X = generate_design_matrix(X_scaled.T[0], X_scaled.T[0], 2)
-    beta = compute_optimal_parameters(X, z)
-    """
-
+    scaler.fit(x_train)
+    x_train_scaled = scaler.transform(x_train)
+    x_test_scaled = scaler.transform(x_test)
     # Plot the surface of the function
+
+    beta_SVD_scaled = compute_optimal_parameters(x_train, y_train)
+    preds2 = predict(X, beta_SVD_scaled)
+    preds2 = preds2.reshape(n_points, n_points)
+
     fig = plt.figure()
     axs = fig.add_subplot(1, 2, 1, projection='3d')
     surf = axs.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
@@ -179,7 +193,8 @@ def perform_OLS_regression():
     fig.colorbar(surf, shrink=0.5, aspect=5)
     #fig2.colorbar(surf, shrink=0.5, aspect=5)
     plt.show()
-
+    
+    
 def test():
     # Making meshgrid of datapoints and compute Franke's function
     n = 5
