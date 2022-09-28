@@ -167,9 +167,13 @@ def perform_OLS_regression(n_points=40, n=5):
     return betas_list, preds, intercept_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list
 
 def plot_figs(*args):
-    for element in args: 
-        print('\n')
-        print(element)
+    
+    x = [i for i in range(0, len(args[0])+1)]
+    fig, axs = plt.subplots(2, 3)
+    
+    print(len(args[0][0]))
+    #axs[0,0].plot(x, args[0][0, 'r')
+    #plt.show()
 
 
     """   
