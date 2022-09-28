@@ -59,7 +59,7 @@ def compute_optimal_parameters(A, y, intercept=True):
 
 def compute_optimal_parameters2(X, y):
 
-    A = np.linalg.pinv(X)
+    A = np.linalg.pinv(X.T@X)@X.T
     beta = A@y.ravel()
 
     return beta
@@ -128,28 +128,39 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
     x, y = generate_data(n_points)
     z = FrankeFunction(x,y)
     MSE_train_list = []
+    MSE_train_list2 = []
     MSE_test_list = []
+    MSE_test_list2 = []
     R2_train_list = []
     R2_test_list = []
     betas_list = []
+    betas_list2 = []
     intercept_list = []
     preds = []
 
     for i in range(1, n+1): 
             
         X = generate_design_matrix(x, y, i, intercept=False)
-        x_train, x_test, y_train, y_test = train_test_split(X, z.ravel(), test_size=0.2, shuffle=True, random_state=seed)
+        X_train, X_test, z_train, z_test = train_test_split(X, z.ravel(), test_size=0.2, shuffle=True, random_state=seed)
         #Centering datasets
-        x_train_mean = np.average(x_train, axis=0) 
-        y_train_mean = np.average(y_train, axis=0)     
+        x_train_mean = np.average(X_train, axis=0) 
+        y_train_mean = np.average(z_train, axis=0)     
         
-        # Using centered values of X and y to compute parameters beta
-        x_train_centered = x_train - x_train_mean
-        y_train_centered = y_train - y_train_mean
-        x_test_centered = x_test - x_train_mean 
+        scaler = MinMaxScaler()
+        scaler.fit(X_train)
+        X_train_scaled = scaler.transform(X_train)
+        X_test_scaled = scaler.transform(X_test)
+        #z_train_scaled = scaler.transform(z_train)
 
-        beta_SVD_cn = compute_optimal_parameters(x_train_centered, y_train_centered)
+        # Using centered values of X and y to compute parameters beta
+        X_train_centered = X_train - x_train_mean
+        z_train_centered = z_train - y_train_mean
+        X_test_centered = X_test - x_train_mean 
+
+        beta_SVD_cn = compute_optimal_parameters(X_train_centered, z_train_centered)
+        beta_SVD_sc = compute_optimal_parameters(X_train_scaled, z_train)
         betas_list.append(beta_SVD_cn)
+        betas_list2.append(beta_SVD_sc)
 
         intercept = np.mean(y_train_mean - x_train_mean @ beta_SVD_cn)
         intercept_list.append(intercept)
@@ -157,20 +168,30 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
         preds_visualization = predict(X, beta_SVD_cn, intercept)
         preds_visualization = preds_visualization.reshape(n_points, n_points)
         preds.append(preds_visualization)
-        preds_train = predict(x_train_centered, beta_SVD_cn, intercept) 
-        preds_test = predict(x_test_centered, beta_SVD_cn, intercept)
-        MSE_train_list.append(MSE(y_train, preds_train))
-        MSE_test_list.append(MSE(y_test, preds_test))
-        R2_train_list.append(R2(y_train, preds_train))
-        R2_test_list.append(R2(y_test, preds_test))
 
-    return betas_list, preds, intercept_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list
+        preds_train = predict(X_train_centered, beta_SVD_cn, intercept) 
+        preds_test = predict(X_test_centered, beta_SVD_cn, intercept)
+
+        preds_train2 = predict(X_train_scaled, beta_SVD_sc)
+        preds_test2 = predict(X_test_scaled, beta_SVD_sc)
+
+        MSE_train_list2.append(MSE(z_train, preds_train2))
+        MSE_test_list2.append(MSE(z_test, preds_test2))
+
+        MSE_train_list.append(MSE(z_train_centered, preds_train))
+        MSE_test_list.append(MSE(z_test, preds_test))
+        
+        R2_train_list.append(R2(z_train, preds_train))
+        R2_test_list.append(R2(z_test, preds_test))
+
+    return betas_list, preds, intercept_list, MSE_train_list, MSE_test_list, MSE_train_list2, MSE_test_list2, R2_train_list, R2_test_list
 
 def plot_figs(*args):
     
     fig, axs = plt.subplots(2,2)
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
     x = [i for i in range(1, len(args[0])+1)]
+    y = np.zeros((len(x)))
 
     beta_matrix = np.zeros((len(args[0]), 5))
     for i in range(beta_matrix.shape[0]): 
@@ -180,10 +201,18 @@ def plot_figs(*args):
             beta_matrix[i][j] = args[0][i][j]
     for k in range(5): 
         axs[0,0].plot(x, [beta_matrix[i,k] for i in range(len(args[0]))], color_list[k], label=f'beta{k+1}')
+    axs[0,0].plot(x, y, 'k', label='x-axis')
     axs[0,0].legend()
-    plt.show()  
-    
-    print(args[1]) 
+     
+
+    axs[0,1].plot(x, args[1], 'b', label='MSE_train') 
+    axs[0,1].plot(x, args[3], 'r', label='MSE_test')
+    axs[0,1].legend()
+
+    axs[1,1].plot(x, args[5], 'b', label='MSE_train') 
+    axs[1,1].plot(x, args[6], 'r', label='MSE_test')
+    axs[1,1].legend()
+    plt.show() 
     """   
     fig = plt.figure()
     axs = fig.add_subplot(1, 2, 1, projection='3d')
@@ -207,8 +236,8 @@ def plot_figs(*args):
     plt.show()
     """
 
-betas, preds, intercepts, MSE_train, MSE_test, R2_train, R2_test = perform_OLS_regression(n=5)
-print(MSE_train)
-plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test)
+betas, preds, intercepts, MSE_train, MSE_test, MSE_train2, MSE_test2, R2_train, R2_test = perform_OLS_regression(n_points=40 ,n=10, seed=42)
+
+plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test, MSE_train2, MSE_test2)
 
 
