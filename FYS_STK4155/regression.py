@@ -4,10 +4,10 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 from random import random, seed
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, Normalizer, RobustScaler
 from sklearn.model_selection import train_test_split
 import sklearn
-from numpy.core import _asarray, newaxis 
+from numpy.core import _asarray
 
 def generate_data(size): 
 # Making data ingestion to the function
@@ -19,13 +19,9 @@ def generate_data(size):
 
 def FrankeFunction(x, y, noise=False):
     term1 = 0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
-    
     term2 = 0.75*np.exp(-((9*x+1)**2)/49.0 - 0.1*(9*y+1))
-
     term3 = 0.5*np.exp(-(9*x-7)**2/4.0 - 0.25*((9*y-3)**2))
-
     term4 = -0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
-
     stoch_noise = np.zeros((len(x),len(x)))
     if noise: 
         stoch_noise = np.random.normal(0, 0.1, len(x)**2)
@@ -33,7 +29,7 @@ def FrankeFunction(x, y, noise=False):
 
     return term1 + term2 + term3 + term4 + stoch_noise
 
-def generate_design_matrix(x, y, order): 
+def generate_design_matrix(x, y, order, intercept=True): 
     x = x.ravel() 
     y = y.ravel()
     
@@ -45,8 +41,8 @@ def generate_design_matrix(x, y, order):
             X = np.column_stack((X, x**(i+1), y**(i+1), (x**i)*(y**i)))
     return np.array(X) 
 
-def compute_optimal_parameters(A, y): 
-    # This method uses SVD to compote the optimal parameters beta for OSL.
+def compute_optimal_parameters(A, y, intercept=True): 
+    # This method uses SVD to compute the optimal parameters beta for OSL.
     # SVD is chosen cause the central matrix of the expression for beta may 
     # cause problems if it's near-singular or singular.
     U, S, VT = np.linalg.svd(A )#, full_matrices=False)
@@ -56,19 +52,9 @@ def compute_optimal_parameters(A, y):
     D[:A.shape[1], :A.shape[1]] = np.diag(d)
 
     beta = (VT.T)@(D.T)@(U.T)@y.ravel()
-  
     return beta
 
-def _makearray(a):
-    new = _asarray(a)
-    wrap = getattr(a, "__array_prepare__", new.__array_wrap__)
-    return new, wrap
-
-
 def compute_optimal_parameters2(X, y):
-
-    #A = np.linalg.pinv(X.T@X)
-    #beta = A@X.T@y.ravel()
 
     A = np.linalg.pinv(X)
     beta = A@y.ravel()
@@ -83,13 +69,12 @@ def optimal_parameters_inv(X, y):
     return beta
 
 
-def predict(X, beta): 
+def predict(X, beta, intercept=0): 
 
     franke_pred = np.array(())
     for i in range(X.shape[0]):
-
-        franke_pred = np.append(franke_pred, np.sum(X[i]*beta))
-
+        franke_pred = np.append(franke_pred, np.sum(X[i]*beta) + intercept)
+    
     return franke_pred
     
 def perform_manual_regression(x, y, beta): 
@@ -141,72 +126,60 @@ def create_X(x, y, n ):
 
 def perform_OLS_regression(): 
 
-    n_points = 100
+    n_points = 40
     n = 5
     x, y = generate_data(n_points)
     
-    #for i in range(1, n): 
+    for i in range(1, n): 
+            
+        X = generate_design_matrix(x, y, n)
+        z = FrankeFunction(x, y) 
 
-    X = generate_design_matrix(x, y, n)
-    z = FrankeFunction(x, y) 
+        x_train, x_test, y_train, y_test = train_test_split(X, z.ravel(), test_size=0.2, shuffle=True, random_state=42)
 
-    x_train, x_test, y_train, y_test = train_test_split(X, z.ravel(), test_size=0.2, shuffle=True, random_state=42)
+        scaler = MinMaxScaler()
+        scaler.fit(x_train)
+        
+        #Centering datasets
+        x_train_mean = np.average(x_train, axis=0) 
+        y_train_mean = np.average(y_train, axis=0)     
 
-    #beta_SVD = compute_optimal_parameters(X, z)
-    #beta_INV = optimal_parameters_inv(X, z)
+        x_train_scaled2 = x_train - x_train_mean
+        y_train_scaled2 = y_train - y_train_mean
+        
+        #Data scaled using SciKit-learn scaler
+        x_train_scaled = scaler.transform(x_train)
+        x_test_scaled = scaler.transform(x_test)
+        # Plot the surface of the function
 
-    #preds = predict(X, beta_SVD)
-    #preds = preds.reshape(len(x), len(y))
+        beta_SVD_scaled = compute_optimal_parameters(x_train_scaled2, y_train_scaled2)
+        intercept = np.mean(y_train_mean - x_train_mean @ beta_SVD_scaled)
+        
+        preds2 = predict(X, beta_SVD_scaled)
+        preds2 = preds2 + intercept
+        preds2 = preds2.reshape(n_points, n_points)
 
-    #beta_SVD_s = compute_optimal_parameters(x_train, y_train)
+        fig = plt.figure()
+        axs = fig.add_subplot(1, 2, 1, projection='3d')
+        surf = axs.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
-    #preds2 = predict(X, beta_SVD_s)
-    #preds2 = preds2.reshape(n_points, n_points)
+        # Customization of z-axis
+        axs.set_zlim(-0.10, 1.40)
+        axs.zaxis.set_major_locator(LinearLocator(10))
+        axs.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+        axs.set_title("Frankes's function")
 
-    scaler = StandardScaler()
-    scaler.fit(x_train)
-    x_train_scaled = scaler.transform(x_train)
-    x_test_scaled = scaler.transform(x_test)
-    # Plot the surface of the function
-
-    beta_SVD_scaled = compute_optimal_parameters(x_train, y_train)
-    preds2 = predict(X, beta_SVD_scaled)
-    preds2 = preds2.reshape(n_points, n_points)
-
-    fig = plt.figure()
-    axs = fig.add_subplot(1, 2, 1, projection='3d')
-    surf = axs.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-
-    # Customization of z-axis
-    axs.set_zlim(-0.10, 1.40)
-    axs.zaxis.set_major_locator(LinearLocator(10))
-    axs.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-    axs.set_title("Frankes's function")
-
-    axs = fig.add_subplot(1, 2, 2, projection='3d')
-    surf = axs.plot_surface(x, y, preds2, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-    axs.set_zlim(-0.10, 1.40)
-    axs.zaxis.set_major_locator(LinearLocator(10))
-    axs.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-    axs.set_title("Polynomial fit of n-th order to Franke's function")
-    # Add a color bar which maps values to colors 
-    fig.colorbar(surf, shrink=0.5, aspect=5)
-    #fig2.colorbar(surf, shrink=0.5, aspect=5)
-    plt.show()
+        axs = fig.add_subplot(1, 2, 2, projection='3d')
+        surf = axs.plot_surface(x, y, preds2, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+        axs.set_zlim(-0.10, 1.40)
+        axs.zaxis.set_major_locator(LinearLocator(10))
+        axs.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+        axs.set_title("Polynomial fit of n-th order to Franke's function")
+        # Add a color bar which maps values to colors 
+        fig.colorbar(surf, shrink=0.5, aspect=5)
+        #fig2.colorbar(surf, shrink=0.5, aspect=5)
+        plt.show()
     
-    
-def test():
-    # Making meshgrid of datapoints and compute Franke's function
-    n = 5
-    N = 1000
-    x = np.sort(np.random.uniform(0, 1, N))
-    y = np.sort(np.random.uniform(0, 1, N))
-    z = FrankeFunction(x, y)
-    X = create_X(x, y, n=n)    
-    # split in training and test data
-    X_train, X_test, y_train, y_test = train_test_split(X,z,test_size=0.2)
-    print(X.shape)
-
 perform_OLS_regression()
 
-#test()
+
