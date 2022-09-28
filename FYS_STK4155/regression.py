@@ -123,7 +123,7 @@ def create_X(x, y, n ):
 
 	return X
 
-def perform_OLS_regression(n_points=40, n=5): 
+def perform_OLS_regression(n_points=40, n=5, seed=None): 
 
     x, y = generate_data(n_points)
     z = FrankeFunction(x,y)
@@ -138,7 +138,7 @@ def perform_OLS_regression(n_points=40, n=5):
     for i in range(1, n+1): 
             
         X = generate_design_matrix(x, y, i, intercept=False)
-        x_train, x_test, y_train, y_test = train_test_split(X, z.ravel(), test_size=0.2, shuffle=True, random_state=42)
+        x_train, x_test, y_train, y_test = train_test_split(X, z.ravel(), test_size=0.2, shuffle=True, random_state=seed)
         #Centering datasets
         x_train_mean = np.average(x_train, axis=0) 
         y_train_mean = np.average(y_train, axis=0)     
@@ -168,13 +168,26 @@ def perform_OLS_regression(n_points=40, n=5):
 
 def plot_figs(*args):
     
-    x = [i for i in range(0, len(args[0])+1)]
-    fig, axs = plt.subplots(2, 3)
-    
-    print(len(args[0][0]))
-    #axs[0,0].plot(x, args[0][0, 'r')
-    #plt.show()
+    x = [i for i in range(1, len(args[0])+1)]
+    fig, axs = plt.subplots(2,2)
 
+    beta_matrix = np.zeros((len(args[0]), 5))
+    for i in range(beta_matrix.shape[0]): 
+        for j in range(len(args[0][i])):
+            if j == 5:
+                break
+            beta_matrix[i][j] = args[0][i][j]
+    
+    print(beta_matrix.shape)
+     
+    axs[0,0].plot(x, [beta_matrix[i,0] for i in range(len(args[0]))], 'r', label='beta1')
+    axs[0,0].plot(x, [beta_matrix[i,1] for i in range(len(args[0]))], 'g', label='beta2')
+    axs[0,0].plot(x, [beta_matrix[i,2] for i in range(len(args[0]))], 'b', label='beta3')
+    axs[0,0].plot(x, [beta_matrix[i,3] for i in range(len(args[0]))], 'y', label='beta4')
+    axs[0,0].plot(x, [beta_matrix[i,4]  for i in range(len(args[0]))], 'k', label='beta5')
+    axs[0,0].legend()
+    plt.show()  
+    
 
     """   
     fig = plt.figure()
@@ -199,7 +212,7 @@ def plot_figs(*args):
     plt.show()
     """
 
-betas, preds, intercepts, MSE_train, MSE_test, R2_train, R2_test = perform_OLS_regression()
+betas, preds, intercepts, MSE_train, MSE_test, R2_train, R2_test = perform_OLS_regression(n=14)
 plot_figs(betas, intercepts)
 
 
