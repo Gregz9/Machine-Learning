@@ -168,8 +168,9 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
 
 def plot_figs(*args):
     
-    x = [i for i in range(1, len(args[0])+1)]
     fig, axs = plt.subplots(2,2)
+    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
+    x = [i for i in range(1, len(args[0])+1)]
 
     beta_matrix = np.zeros((len(args[0]), 5))
     for i in range(beta_matrix.shape[0]): 
@@ -177,18 +178,12 @@ def plot_figs(*args):
             if j == 5:
                 break
             beta_matrix[i][j] = args[0][i][j]
-    
-    print(beta_matrix.shape)
-     
-    axs[0,0].plot(x, [beta_matrix[i,0] for i in range(len(args[0]))], 'r', label='beta1')
-    axs[0,0].plot(x, [beta_matrix[i,1] for i in range(len(args[0]))], 'g', label='beta2')
-    axs[0,0].plot(x, [beta_matrix[i,2] for i in range(len(args[0]))], 'b', label='beta3')
-    axs[0,0].plot(x, [beta_matrix[i,3] for i in range(len(args[0]))], 'y', label='beta4')
-    axs[0,0].plot(x, [beta_matrix[i,4]  for i in range(len(args[0]))], 'k', label='beta5')
+    for k in range(5): 
+        axs[0,0].plot(x, [beta_matrix[i,k] for i in range(len(args[0]))], color_list[k], label=f'beta{k+1}')
     axs[0,0].legend()
     plt.show()  
     
-
+    print(args[1]) 
     """   
     fig = plt.figure()
     axs = fig.add_subplot(1, 2, 1, projection='3d')
@@ -212,7 +207,8 @@ def plot_figs(*args):
     plt.show()
     """
 
-betas, preds, intercepts, MSE_train, MSE_test, R2_train, R2_test = perform_OLS_regression(n=14)
-plot_figs(betas, intercepts)
+betas, preds, intercepts, MSE_train, MSE_test, R2_train, R2_test = perform_OLS_regression(n=5)
+print(MSE_train)
+plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test)
 
 
