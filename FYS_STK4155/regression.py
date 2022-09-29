@@ -8,11 +8,13 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler, Normalizer, Robu
 from sklearn.model_selection import train_test_split
 import sklearn
 from numpy.core import _asarray
+from sklearn.metrics import mean_squared_error
 
-def generate_data(size): 
+def generate_data(size, seed=None): 
 # Making data ingestion to the function
-    x = np.arange(0, 1, 1/size)
-    y = np.arange(0, 1, 1/size) 
+    np.random.seed(seed)
+    x = np.arange(0, 1, 1/size) #np.sort(np.random.uniform(0, 1, size))    
+    y = np.arange(0, 1, 1/size) #np.sort(np.random.uniform(0, 1, size))
     x, y = np.meshgrid(x,y)
 
     return x, y
@@ -43,6 +45,22 @@ def generate_design_matrix(x, y, order, intercept=True):
     if not intercept: 
         X = np.delete(X, 0, axis=1)
     return np.array(X) 
+
+def create_X(x, y, n ):
+	if len(x.shape) > 1:
+		x = np.ravel(x)
+		y = np.ravel(y)
+
+	N = len(x)
+	l = int((n+1)*(n+2)/2)		# Number of elements in beta
+	X = np.ones((N,l))
+
+	for i in range(1,n+1):
+		q = int((i)*(i+1)/2)
+		for k in range(i+1):
+			X[:,q+k] = (x**(i-k))*(y**k)
+
+	return X
 
 def compute_optimal_parameters(A, y, intercept=True): 
     # This method uses SVD to compute the optimal parameters beta for OSL.
@@ -85,7 +103,8 @@ def R2(y, y_hat):
     return 1 - np.sum((y - y_hat)**2) / np.sum((y - np.mean(y_hat))**2)
 
 def MSE(y, y_hat): 
-    return np.sum((y-y_hat)**2)/np.size(y)
+    n = np.size(y_hat)
+    return np.sum((y-y_hat)**2)/n
 
 def split_data(x, y, test_size=0.25, shuffle=False, seed=None): 
     
@@ -107,26 +126,11 @@ def split_data(x, y, test_size=0.25, shuffle=False, seed=None):
 
     return x_train, x_test, y_train, y_test
 
-def create_X(x, y, n ):
-	if len(x.shape) > 1:
-		x = np.ravel(x)
-		y = np.ravel(y)
-
-	N = len(x)
-	l = int((n+1)*(n+2)/2)		# Number of elements in beta
-	X = np.ones((N,l))
-
-	for i in range(1,n+1):
-		q = int((i)*(i+1)/2)
-		for k in range(i+1):
-			X[:,q+k] = (x**(i-k))*(y**k)
-
-	return X
-
 def perform_OLS_regression(n_points=40, n=5, seed=None): 
 
-    x, y = generate_data(n_points)
+    x, y = generate_data(n_points, seed)
     z = FrankeFunction(x,y)
+
     MSE_train_list = []
     MSE_train_list2 = []
     MSE_test_list = []
@@ -136,15 +140,16 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
     betas_list = []
     betas_list2 = []
     intercept_list = []
-    preds = []
+    preds_cn = []
 
     for i in range(1, n+1): 
             
         X = generate_design_matrix(x, y, i, intercept=False)
-        X_train, X_test, z_train, z_test = train_test_split(X, z.ravel(), test_size=0.2, shuffle=True, random_state=seed)
+        X_train, X_test, z_train, z_test = train_test_split(X, z.ravel(), test_size=0.2, random_state=seed)
+        
         #Centering datasets
-        x_train_mean = np.average(X_train, axis=0) 
-        y_train_mean = np.average(z_train, axis=0)     
+        x_train_mean = np.mean(X_train, axis=0) 
+        z_train_mean = np.mean(z_train, axis=0)     
         
         scaler = MinMaxScaler()
         scaler.fit(X_train)
@@ -154,37 +159,38 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
 
         # Using centered values of X and y to compute parameters beta
         X_train_centered = X_train - x_train_mean
-        z_train_centered = z_train - y_train_mean
+        z_train_centered = z_train - z_train_mean
         X_test_centered = X_test - x_train_mean 
 
-        beta_SVD_cn = compute_optimal_parameters(X_train_centered, z_train_centered)
-        beta_SVD_sc = compute_optimal_parameters(X_train_scaled, z_train)
+        beta_SVD_cn = compute_optimal_parameters2(X_train_centered, z_train_centered)
+        #beta_SVD_cn = optimal_parameters_inv(X_train_centered, z_train_centered)
+        beta_SVD_sc = compute_optimal_parameters2(X_train_scaled, z_train)
         betas_list.append(beta_SVD_cn)
         betas_list2.append(beta_SVD_sc)
 
-        intercept = np.mean(y_train_mean - x_train_mean @ beta_SVD_cn)
-        intercept_list.append(intercept)
+        intercept = np.mean(z_train_mean - x_train_mean @ beta_SVD_cn)
 
-        preds_visualization = predict(X, beta_SVD_cn, intercept)
-        preds_visualization = preds_visualization.reshape(n_points, n_points)
-        preds.append(preds_visualization)
+        preds_visualization_cn = predict(X, beta_SVD_cn, intercept)
+        preds_visualization_cn = preds_visualization_cn.reshape(n_points, n_points)
+        preds_cn.append(preds_visualization_cn)
 
-        preds_train = predict(X_train_centered, beta_SVD_cn, intercept) 
-        preds_test = predict(X_test_centered, beta_SVD_cn, intercept)
+        preds_train_cn = predict(X_train_centered, beta_SVD_cn, z_train_mean) 
+        preds_test_cn = predict(X_test_centered, beta_SVD_cn, z_train_mean)
 
-        preds_train2 = predict(X_train_scaled, beta_SVD_sc)
-        preds_test2 = predict(X_test_scaled, beta_SVD_sc)
+        preds_train_sc= predict(X_train_scaled, beta_SVD_sc)
+        preds_test_sc = predict(X_test_scaled, beta_SVD_sc)
 
-        MSE_train_list2.append(MSE(z_train, preds_train2))
-        MSE_test_list2.append(MSE(z_test, preds_test2))
+        MSE_train_list2.append(MSE(z_train, preds_train_sc))
+        MSE_test_list2.append(MSE(z_test, preds_test_sc))
+    
 
-        MSE_train_list.append(MSE(z_train_centered, preds_train))
-        MSE_test_list.append(MSE(z_test, preds_test))
+        MSE_train_list.append(MSE(z_train, preds_train_cn))
+        MSE_test_list.append(MSE(z_test, preds_test_cn))
         
-        R2_train_list.append(R2(z_train, preds_train))
-        R2_test_list.append(R2(z_test, preds_test))
+        R2_train_list.append(R2(z_train, preds_train_cn))
+        R2_test_list.append(R2(z_test, preds_test_cn))
 
-    return betas_list, preds, intercept_list, MSE_train_list, MSE_test_list, MSE_train_list2, MSE_test_list2, R2_train_list, R2_test_list
+    return betas_list, preds_cn, MSE_train_list, MSE_test_list, MSE_train_list2, MSE_test_list2, R2_train_list, R2_test_list, x,y,z
 
 def plot_figs(*args):
     
@@ -203,7 +209,6 @@ def plot_figs(*args):
         axs[0,0].plot(x, [beta_matrix[i,k] for i in range(len(args[0]))], color_list[k], label=f'beta{k+1}')
     axs[0,0].plot(x, y, 'k', label='x-axis')
     axs[0,0].legend()
-     
 
     axs[0,1].plot(x, args[1], 'b', label='MSE_train') 
     axs[0,1].plot(x, args[3], 'r', label='MSE_test')
@@ -212,32 +217,36 @@ def plot_figs(*args):
     axs[1,1].plot(x, args[5], 'b', label='MSE_train') 
     axs[1,1].plot(x, args[6], 'r', label='MSE_test')
     axs[1,1].legend()
+
+    axs[1,0].plot(x, args[2], 'g', label='R2_train')
+    axs[1,0].plot(x, args[4], 'y', label='R2_test')
     plt.show() 
-    """   
-    fig = plt.figure()
-    axs = fig.add_subplot(1, 2, 1, projection='3d')
-    surf = axs.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    # ---------------------------------------------------------------------------------- #
+    fig= plt.figure()
+    ax = fig.add_subplot(1, 2, 1,projection='3d')
+    surf = ax.plot_surface(args[8], args[9], args[7][4], cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
     # Customization of z-axis
-    axs.set_zlim(-0.10, 1.40)
-    axs.zaxis.set_major_locator(LinearLocator(10))
-    axs.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-    axs.set_title("Frankes's function")
-
-    axs = fig.add_subplot(1, 2, 2, projection='3d')
-    surf = axs.plot_surface(x, y, preds_visualization, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-    axs.set_zlim(-0.10, 1.40)
-    axs.zaxis.set_major_locator(LinearLocator(10))
-    axs.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-    axs.set_title("Polynomial fit of n-th order")
+    ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_title("Frankes's function")
+    fig.colorbar(surf, shrink=0.5, aspect=5)
+    
+    # -----------------------------------------------------------------------------------""
+    ax = fig.add_subplot(1, 2, 2, projection='3d')
+    surf = ax.plot_surface(args[8], args[9], args[10], cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_title("Polynomial fit of n-th order")
     # Add a color bar which maps values to colors 
     fig.colorbar(surf, shrink=0.5, aspect=5)
-    #fig2.colorbar(surf, shrink=0.5, aspect=5)
     plt.show()
-    """
-
-betas, preds, intercepts, MSE_train, MSE_test, MSE_train2, MSE_test2, R2_train, R2_test = perform_OLS_regression(n_points=40 ,n=10, seed=42)
-
-plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test, MSE_train2, MSE_test2)
-
+    
+    
+betas, preds_cn, MSE_train, MSE_test, MSE_train2, MSE_test2, R2_train, R2_test, x,y,z = perform_OLS_regression(n_points=20 ,n=10, seed=9)
+print(preds_cn)
+#print(MSE_train)
+plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test, MSE_train2, MSE_test2, preds_cn, x,y,z)
 
