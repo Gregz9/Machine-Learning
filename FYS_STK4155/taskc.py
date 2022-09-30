@@ -22,14 +22,18 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, seed=None):
     MSE_test_list = np.empty(degrees)
     betas_list = []
     preds_cn = np.empty((n_points**2,degrees))
+    bias = np.zeros(degrees)
+    variance = np.zeros(degrees)
+
 
     for degree in range(1, degrees+1): 
             
         X = generate_design_matrix(x,y,degree)
         MSE_train_avg = np.empty((n_boots))
         MSE_test_avg = np.empty((n_boots))
-        betas_avg = np.empty((3*degree, n_boots))
-        preds_avg = np.empty((n_points**2,n_boots))
+        #betas_avg = np.empty((3*degree, n_boots))
+        #preds_avg = np.empty((n_points**2,n_boots))
+
 
         X_train, X_test, z_train, z_test = train_test_split(X, z.ravel(), test_size=0.2)#, random_state=seed)
         z_pred_train = np.empty((z_train.shape[0], n_boots))
@@ -68,10 +72,12 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, seed=None):
         #betas_list.append(np.mean(betas_avg, axis=1))
         MSE_train_list[degree-1] = np.mean(MSE_train_avg)#, keepdims=True)
         MSE_test_list[degree-1] = np.mean(np.mean((z_pred_test-z_test)**2,axis=1, keepdims=True))
+        bias[degree-1] = np.mean((z_test - np.mean(z_pred_test, axis=1, keepdims=True))**2)
+        variance[degree-1] = np.mean(np.var(z_pred_test, axis=1, keepdims=True))
         #preds_cn[:, degree-1] = np.mean(preds_avg, axis=1)
+        
     
-    
-    return betas_list, preds_cn, MSE_train_list, MSE_test_list
+    return bias, variance, MSE_train_list, MSE_test_list
 
 def plot_OLS_boot_figs(*args):
     
@@ -85,19 +91,25 @@ def plot_OLS_boot_figs(*args):
     axs[0,0].set_xlabel('Polynomial order')
     axs[0,0].set_ylabel('Mean Squared Error')
     axs[0,0].legend()
-    """
-    axs[1,0].plot(x, args[2], 'g', label='R2_train')
-    axs[1,0].plot(x, args[4], 'y', label='R2_test')
-    axs[1,0].set_xlabel('Polynomial order')
-    axs[1,0].set_ylabel('R2 Score')
-    axs[1,0].legend()
-    """
+   
+    axs[0,1].plot(x, args[1], 'b', label='MSE_test') 
+    axs[0,1].plot(x, args[2], 'g', label='variance')
+    axs[0,1].plot(x, args[3], 'y', label='bias')
+    axs[0,1].set_xlabel('Polynomial order')
+    axs[0,1].set_ylabel('R2 Score')
+    axs[0,1].legend()
+    
     plt.show() 
 
-import time 
-#_,_, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=12, n_boots=20, seed=9)
-#_,_, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=12, seed=47)
+import time
 start_time =time.time()
-_,_, MSE_train, MSE_test = OLS_boot_reg(n_points=100, degrees=10, n_boots=100)
-plot_OLS_boot_figs(MSE_train, MSE_test)
+
+#_,_, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=12, n_boots=20, seed=9)
+#bias, var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=12, seed=47)
+#bias, var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=25, seed=245)
+#bias, var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=25, seed=1911)
+bias, var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=20, seed=2546)
+
+
+plot_OLS_boot_figs(MSE_train, MSE_test, var, bias)
 print("--- %s seconds ---" %(time.time()- start_time))
