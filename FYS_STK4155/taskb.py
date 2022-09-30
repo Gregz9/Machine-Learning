@@ -10,7 +10,7 @@ import sklearn
 from numpy.core import _asarray
 from sklearn.metrics import mean_squared_error
 from utils import ( 
-    FrankeFunction, generate_random_data, generate_determ_data, generate_design_matrix, 
+    FrankeFunction, generate_random_data, create_X, generate_design_matrix, 
     compute_optimal_parameters, predict, R2, MSE)
 
 def perform_OLS_regression(n_points=40, n=5, seed=None): 
@@ -46,6 +46,7 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
         intercept = np.mean(z_train_mean - x_train_mean @ beta_SVD_cn)
 
         preds_visualization_cn = predict(X, beta_SVD_cn, intercept)
+
         preds_visualization_cn = preds_visualization_cn.reshape(n_points, n_points)
         preds_cn.append(preds_visualization_cn)
 

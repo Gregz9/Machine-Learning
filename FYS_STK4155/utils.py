@@ -53,20 +53,19 @@ def generate_design_matrix(x, y, order, intercept=True):
         X = np.delete(X, 0, axis=1)
     return np.array(X) 
 
-def create_X(x, y, n ):
+def create_X(x, y, n, intercept=True):
 	if len(x.shape) > 1:
 		x = np.ravel(x)
 		y = np.ravel(y)
 
 	N = len(x)
 	l = int((n+1)*(n+2)/2)		# Number of elements in beta
-	X = np.ones((N,l))
+	X = np.zeros((N,l))
 
 	for i in range(1,n+1):
 		q = int((i)*(i+1)/2)
 		for k in range(i+1):
 			X[:,q+k] = (x**(i-k))*(y**k)
-
 	return X
 
 def compute_optimal_parameters(A, y, intercept=True): 

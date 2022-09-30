@@ -2,16 +2,59 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm 
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
+from sklearn.linear_model import LinearRegression
 import numpy as np
 from random import random, seed
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, Normalizer, RobustScaler
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn.model_selection import train_test_split
 import sklearn
+from sklearn.pipeline import make_pipeline
 from numpy.core import _asarray
 from sklearn.utils import resample
 from utils import ( 
-    FrankeFunction, generate_random_data, create_X, generate_design_matrix, 
+    FrankeFunction, generate_random_data, generate_design_matrix, 
     compute_optimal_parameters, predict, MSE)
+
+def Hastie(): 
+    np.random.seed(2018)
+
+    datapoints = 600
+    n_boostraps = 200
+    maxdegree = 30
+
+    # Make data set.
+    x = np.linspace(-3, 3, datapoints).reshape(-1, 1)
+    y = np.exp(-x**2) + 1.5 * np.exp(-(x-2)**2)+ np.random.normal(0, 0.1, x.shape)
+    print(x.shape)
+    error = np.zeros(maxdegree)
+    bias = np.zeros(maxdegree)
+    variance = np.zeros(maxdegree)
+    polydegree = np.zeros(maxdegree)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+
+    for degree in range(maxdegree):
+        model = make_pipeline(PolynomialFeatures(degree=degree), LinearRegression(fit_intercept=False))
+        betas = compute_optimal_parameters(x_train, y_train)
+        y_pred = np.empty((y_test.shape[0], n_boostraps))
+        for i in range(n_boostraps):
+            x_, y_ = resample(x_train, y_train)
+            y_pred[:, i] = predict(x_test, betas).ravel()
+
+        polydegree[degree] = degree
+        error[degree] = np.mean( np.mean((y_test - y_pred)**2, axis=1, keepdims=True) )
+        bias[degree] = np.mean( (y_test - np.mean(y_pred, axis=1, keepdims=True))**2 )
+        variance[degree] = np.mean( np.var(y_pred, axis=1, keepdims=True) )
+        #print('Polynomial degree:', degree)
+        #print('Error:', error[degree])
+        #print('Bias^2:', bias[degree])
+        #print('Var:', variance[degree])
+        #print('{} >= {} + {} = {}'.format(error[degree], bias[degree], variance[degree], bias[degree]+variance[degree]))
+
+    plt.plot(polydegree, error, label='Error')
+    plt.plot(polydegree, bias, label='bias')
+    plt.plot(polydegree, variance, label='Variance')
+    plt.legend()
+    plt.show()
 
 def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, seed=None): 
 
@@ -66,12 +109,13 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, seed=None):
             z_pred_test[:, j] = predict(X_test, beta_SVD_cn)#, z_train_mean)
 
             MSE_train_avg[j] = MSE(z_train, z_pred_train[:, j])
-            #MSE_test_avg[j] = MSE(z_test, z_pred_test[:, j])
+            MSE_test_avg[j] = MSE(z_test, z_pred_test[:, j])
         
         z_test = z_test.reshape((len(z_test), 1))
         #betas_list.append(np.mean(betas_avg, axis=1))
         MSE_train_list[degree-1] = np.mean(MSE_train_avg)#, keepdims=True)
-        MSE_test_list[degree-1] = np.mean(np.mean((z_pred_test-z_test)**2,axis=1, keepdims=True))
+        #MSE_test_list[degree-1] = np.mean(np.mean((z_test-z_pred_test)**2,axis=1, keepdims=True))
+        MSE_test_list[degree-1] = np.mean(MSE_test_avg)
         bias[degree-1] = np.mean((z_test - np.mean(z_pred_test, axis=1, keepdims=True))**2)
         variance[degree-1] = np.mean(np.var(z_pred_test, axis=1, keepdims=True))
         #preds_cn[:, degree-1] = np.mean(preds_avg, axis=1)
@@ -101,15 +145,8 @@ def plot_OLS_boot_figs(*args):
     
     plt.show() 
 
-import time
-start_time =time.time()
+#bias,var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=20, seed=9)
 
-#_,_, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=12, n_boots=20, seed=9)
-#bias, var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=12, seed=47)
-#bias, var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=25, seed=245)
-#bias, var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=25, seed=1911)
-bias, var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=20, seed=2546)
+#plot_OLS_boot_figs(MSE_train, MSE_test, var, bias)
 
-
-plot_OLS_boot_figs(MSE_train, MSE_test, var, bias)
-print("--- %s seconds ---" %(time.time()- start_time))
+Hastie()
