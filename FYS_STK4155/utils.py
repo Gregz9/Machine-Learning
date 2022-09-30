@@ -12,14 +12,19 @@ from sklearn.metrics import mean_squared_error
 
 # This file contains all function necessary for running regression
 
-def generate_data(size, seed=None): 
+def generate_random_data(size, seed=None): 
 # Making data ingestion to the function
     np.random.seed(seed)
     x = np.sort(np.random.uniform(0, 1, size)) #np.arange(0, 1, 1/size) 
     y = np.sort(np.random.uniform(0, 1, size)) #np.arange(0, 1, 1/size) 
     x, y = np.meshgrid(x,y)
-
     return x, y
+
+def generate_determ_data(size): 
+    x = np.arange(0, 1, 1/size)
+    y = np.arange(0, 1, 1/size)
+    x, y = np.meshgrid(x,y)
+    return x,y
 
 def FrankeFunction(x, y, noise=False):
     term1 = 0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
@@ -98,8 +103,7 @@ def R2(y, y_hat):
     return 1 - np.sum((y - y_hat)**2) / np.sum((y - np.mean(y_hat))**2)
 
 def MSE(y, y_hat): 
-    n = np.size(y_hat)
-    return np.sum((y-y_hat)**2)/n
+    return np.sum((y-y_hat)**2)/np.size(y_hat)
 
 def split_data(x, y, test_size=0.25, shuffle=False, seed=None): 
     
@@ -129,10 +133,3 @@ def boot_strap(*arrays, data_points, n_samples):
     for i in range(len(arrays)): 
         datasets[i] = arrays[i][indices]
     return datasets
-        
-
-x, y = generate_data(2,7)
-
-X = generate_design_matrix(x,y,2,False)
-
-print(np.mean(X, axis=0))

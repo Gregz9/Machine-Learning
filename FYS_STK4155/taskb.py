@@ -10,12 +10,12 @@ import sklearn
 from numpy.core import _asarray
 from sklearn.metrics import mean_squared_error
 from utils import ( 
-    FrankeFunction, generate_data, generate_design_matrix, 
+    FrankeFunction, generate_random_data, generate_determ_data, generate_design_matrix, 
     compute_optimal_parameters, predict, R2, MSE)
 
 def perform_OLS_regression(n_points=40, n=5, seed=None): 
 
-    x, y = generate_data(n_points, seed)
+    x, y = generate_random_data(n_points, seed)
     z = FrankeFunction(x,y)
 
     MSE_train_list = []
@@ -38,6 +38,7 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
         X_train_centered = X_train - x_train_mean
         z_train_centered = z_train - z_train_mean
         X_test_centered = X_test - x_train_mean 
+        
 
         beta_SVD_cn = compute_optimal_parameters(X_train_centered, z_train_centered)
         betas_list.append(beta_SVD_cn)
@@ -48,7 +49,10 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
         preds_visualization_cn = preds_visualization_cn.reshape(n_points, n_points)
         preds_cn.append(preds_visualization_cn)
 
-        preds_train_cn = predict(X_train_centered, beta_SVD_cn, z_train_mean) 
+        preds_train_cn = predict(X_train_centered, beta_SVD_cn, z_train_mean)
+        #print('Without intercept', np.sum(predict(X_train_centered, beta_SVD_cn)))
+        #print('With intercept', np.sum(predict(X_train_centered, beta_SVD_cn, z_train_mean)))
+
         preds_test_cn = predict(X_test_centered, beta_SVD_cn, z_train_mean)
 
         MSE_train_list.append(MSE(z_train, preds_train_cn))
@@ -92,7 +96,7 @@ def plot_figs(*args):
     axs[1,0].legend()
     plt.show() 
     # ---------------------------------------------------------------------------------- #
-    x, y = generate_data(args[6], seed=args[7])
+    x, y = generate_random_data(args[6], seed=args[7])
     z = FrankeFunction(x,y)
     fig= plt.figure()
     ax = fig.add_subplot(1, 2, 1,projection='3d')
@@ -118,7 +122,7 @@ def plot_figs(*args):
     
 data_size = 20
 betas, preds_cn, MSE_train, MSE_test, R2_train, R2_test = perform_OLS_regression(data_size ,n=10, seed=9)
-print(preds_cn)
+
 #print(MSE_train)
 plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test, preds_cn, data_size, 9)
 
