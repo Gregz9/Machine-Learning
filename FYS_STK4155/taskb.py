@@ -27,7 +27,9 @@ def perform_OLS_regression(n_points=40, n=5, seed=None):
 
     for i in range(1, n+1): 
             
-        X = generate_design_matrix(x, y, i, intercept=False)
+        #X = generate_design_matrix(x, y, i, intercept=False)
+        X = create_X(x,y,i)
+        X = np.delete(X, 0, axis=1)
         X_train, X_test, z_train, z_test = train_test_split(X, z.ravel(), test_size=0.2, random_state=seed)
         
         #Centering datasets

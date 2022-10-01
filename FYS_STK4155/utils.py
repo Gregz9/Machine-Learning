@@ -53,7 +53,13 @@ def generate_design_matrix(x, y, order, intercept=True):
         X = np.delete(X, 0, axis=1)
     return np.array(X) 
 
-def create_X(x, y, n, intercept=True):
+def create_simple_X(x, feat): 
+    X = np.zeros((len(x), feat))
+    for i in range(0, feat): 
+        X[:, i] = x**i+x*i
+    return X
+
+def create_X(x, y, n):
 	if len(x.shape) > 1:
 		x = np.ravel(x)
 		y = np.ravel(y)
@@ -72,7 +78,7 @@ def compute_optimal_parameters(A, y, intercept=True):
     # This method uses SVD to compute the optimal parameters beta for OSL.
     # SVD is chosen cause the central matrix of the expression for beta may 
     # cause problems if it's near-singular or singular.
-    U, S, VT = np.linalg.svd(A )#, full_matrices=False)
+    U, S, VT = np.linalg.svd(A)#, full_matrices=False)
      
     d = np.divide(1.0, S, where=(S!=0))
     D = np.zeros(A.shape)
