@@ -135,11 +135,11 @@ def KFold_split(z, k):
     splits = np.split(indices, k)
 
     #print(X[splits[0]])
-    train_indices = np.empty((k, len(splits[0])*(k-1)))
-    test_indices = np.empty((k, len(splits[0])))
+    train_indices = np.empty((k, len(splits[0])*(k-1)), dtype=np.int64)
+    test_indices = np.empty((k, len(splits[0])), dtype=np.int64)
 
     for split in range(len(splits)): 
-        train_indices[split, :] = np.concatenate(splits[:split] + splits[split+1:])
+        train_indices[split, :] = np.concatenate(splits[:split] + splits[split+1:], dtype=np.int64)
         test_indices[split, :] = splits[split]
     return train_indices, test_indices
 
