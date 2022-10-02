@@ -12,6 +12,7 @@ import sklearn
 from sklearn.pipeline import make_pipeline
 from numpy.core import _asarray
 from sklearn.utils import resample
+import time
 from utils import ( 
     FrankeFunction, generate_determ_data, create_X, create_simple_X,
     compute_optimal_parameters, compute_optimal_parameters_inv, generate_design_matrix, predict, MSE)
@@ -92,13 +93,14 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True):
         #preds_avg = np.empty((n_points**2,n_boots))
         
         X_train, X_test, z_train, z_test = train_test_split(X[:, :i], z.ravel(), test_size=0.2)#, random_state=seed)
-        print(X[:, :i].shape)
         pred_train_avg = np.empty((n_boots, z_train.shape[0]))
         pred_test_avg = np.empty((n_boots, z_test.shape[0]))
         training_error = 0
         test_error = 0
-
+        print(f'Polynomial degree {degree}')
+        start_time = time.time()
         for j in range(n_boots): 
+            
             # Bootstrap resampling of datasets after split
             X_, z_ = resample(X_train, z_train, replace=True)
 
@@ -130,7 +132,7 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True):
             training_error += MSE(z_train, z_pred_train)
             test_error += MSE(z_test, z_pred_test)
     
-        
+        print("Time used %s seconds" % (time.time() - start_time))
         MSE_train_list[degree-1] = np.mean(np.mean((pred_train_avg-z_train)**2, axis=0, keepdims=True))#training_error/n_boots
         MSE_test_list[degree-1] = np.mean(np.mean((pred_test_avg-z_test)**2, axis=0, keepdims=True))#test_error/n_boots
         polydegree[degree-1] = degree

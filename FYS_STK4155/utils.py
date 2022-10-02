@@ -130,6 +130,22 @@ def split_data(x, y, test_size=0.25, shuffle=False, seed=None):
 
     return x_train, x_test, y_train, y_test
 
+def KFold_split(z, k): 
+    indices = np.random.choice(len(z),len(z), replace=False)
+    splits = np.split(indices, k)
+
+    #print(X[splits[0]])
+    train_indices = np.empty((k, len(splits[0])*(k-1)))
+    test_indices = np.empty((k, len(splits[0])))
+
+    for split in range(len(splits)): 
+        train_indices[split, :] = np.concatenate(splits[:split] + splits[split+1:])
+        test_indices[split, :] = splits[split]
+    return train_indices, test_indices
+
+
+
+
 def boot_strap(*arrays, data_points, n_samples):
     # Bootstrap sepcified for use in 3d-regression, takes in two arrays  
     datasets = np.array(len(arrays))
