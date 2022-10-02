@@ -131,15 +131,30 @@ def split_data(x, y, test_size=0.25, shuffle=False, seed=None):
     return x_train, x_test, y_train, y_test
 
 def KFold_split(z, k): 
+    split_indices = np.zeros(k-1, dtype=np.int64)
+ 
+    if (len(z))%k != 0: 
+        a = len(z)
+        b1 = np.ceil(len(z)/k)
+        b = b1 
+        ind = 0
+        while a >= b1: 
+            split_indices[ind] = b
+            a -= np.ceil(len(z)/k)    
+            b += b1
+            ind += 1
+        #split_indices.append(a)
+    print(split_indices)
+
     indices = np.random.choice(len(z),len(z), replace=False)
-    splits = np.split(indices, k)
+    splits = np.split(indices, indices_or_sections=split_indices)
 
     #print(X[splits[0]])
     train_indices = np.empty((k, len(splits[0])*(k-1)), dtype=np.int64)
     test_indices = np.empty((k, len(splits[0])), dtype=np.int64)
 
     for split in range(len(splits)): 
-        train_indices[split, :] = np.concatenate(splits[:split] + splits[split+1:], dtype=np.int64)
+        train_indices[split] = np.concatenate((splits[:split] + splits[split+1:]), axis=0)
         test_indices[split, :] = splits[split]
     return train_indices, test_indices
 
