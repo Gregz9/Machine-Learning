@@ -18,7 +18,7 @@ from utils import (
     compute_optimal_parameters_inv, generate_design_matrix, predict, MSE, KFold_split,
 )
 
-def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=9): 
+def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=9, include_wrong_calc=False): 
     np.random.seed(r_seed)
     
     x,y = generate_determ_data(n_points)
@@ -84,8 +84,12 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
 
             MSE_train[degree-1] =  np.mean(np.mean((trn-trn_pred)**2, axis=0, keepdims=True))  #training_error/folds
             MSE_test[degree-1] = np.mean(np.mean((tst-tst_pred)**2, axis=0, keepdims=True)) #test_error/folds
-            bias[degree-1] =  np.mean((tst - np.mean(tst_pred, axis=0, keepdims=True))**2) #+ np.mean((z_test_set[testInd] - np.mean(pred_test_avg[testInd], axis=0, keepdims=True))**2)
-            variance[degree-1] = np.mean(np.var(tst_pred, keepdims=True)) #+ np.mean(np.var(pred_test_avg[testInd], axis=0, keepdims=True))
+            if include_wrong_calc:
+                bias[degree-1] =  np.mean((tst - np.mean(tst_pred, axis=0, keepdims=True))**2) + np.mean((z_test_set[testInd] - np.mean(pred_test_avg[testInd], axis=0, keepdims=True))**2)
+                variance[degree-1] = np.mean(np.var(tst_pred, keepdims=True)) + np.mean(np.var(pred_test_avg[testInd], axis=0, keepdims=True))
+            else: 
+                bias[degree-1] =  np.mean((tst - np.mean(tst_pred, axis=0, keepdims=True))**2)
+                variance[degree-1] = np.mean(np.var(tst_pred, keepdims=True))
             polydegree[degree-1] = degree
         else: 
 
@@ -94,9 +98,6 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
             bias[degree-1] =  np.mean((z_test_set - np.mean(pred_test_avg, axis=0, keepdims=True))**2) 
             variance[degree-1] = np.mean(np.var(pred_test_avg, keepdims=True)) 
             polydegree[degree-1] = degree
-
-
-
 
     return bias, variance, MSE_train, MSE_test, polydegree
 
@@ -124,6 +125,6 @@ def plot_OLS_boot_figs(*args):
 # Good values for the random seed variable r_seed => [2, 3, 17 
 # Size of dataset good for the analysis of bias-variance trade-off => 10
 
-bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=4, folds=10)
+bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=4, folds=9)
 
 plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
