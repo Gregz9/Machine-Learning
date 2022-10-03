@@ -132,33 +132,36 @@ def split_data(x, y, test_size=0.25, shuffle=False, seed=None):
 
 def KFold_split(z, k): 
     split_indices = np.zeros(k-1, dtype=np.int64)
- 
-    if (len(z))%k != 0: 
-        a = len(z)
-        b1 = np.ceil(len(z)/k)
-        b = b1 
-        ind = 0
-        while a >= b1: 
-            split_indices[ind] = b
-            a -= np.ceil(len(z)/k)    
-            b += b1
-            ind += 1
-        #split_indices.append(a)
-    print(split_indices)
+    split_size = int(np.ceil(len(z)/k))
+    length_ = split_size*(k-1)
 
-    indices = np.random.choice(len(z),len(z), replace=False)
+    split_indices[:k-2] = np.arange(length_/(k-1), length_, length_/(k-1), dtype=np.int64)
+    split_indices[k-2] = length_
+
+    indices = np.arange(0,len(z),1)
     splits = np.split(indices, indices_or_sections=split_indices)
 
-    #print(X[splits[0]])
-    train_indices = np.empty((k, len(splits[0])*(k-1)), dtype=np.int64)
-    test_indices = np.empty((k, len(splits[0])), dtype=np.int64)
+    train_indices = [] 
+    test_indices = [] 
 
     for split in range(len(splits)): 
-        train_indices[split] = np.concatenate((splits[:split] + splits[split+1:]), axis=0)
-        test_indices[split, :] = splits[split]
-    return train_indices, test_indices
-
-
+        size = 0 
+        a = []
+        b = []
+        for i in range(len(splits)):
+            if i == split: 
+                b.extend(splits[i])
+                continue
+            size += len(splits[i])
+            a.extend(splits[i][:])
+        
+        train_ind = np.array(a, dtype=np.int64)
+        test_ind = np.array(b, dtype=np.int64)
+    
+        train_indices.append(train_ind)
+        test_indices.append(test_ind)
+        
+    return (train_indices, test_indices)
 
 
 def boot_strap(*arrays, data_points, n_samples):
@@ -169,3 +172,4 @@ def boot_strap(*arrays, data_points, n_samples):
     for i in range(len(arrays)): 
         datasets[i] = arrays[i][indices]
     return datasets
+

@@ -27,14 +27,19 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
     X = create_X(x,y,degrees)
     z = z.ravel()
     train_ind, test_ind = KFold_split(z=z, k=folds)
+    print('\n')
+    #for i in range(len(test_ind)):
+        #print(test_ind[i])
+    
     train_s, test_s = np.empty(folds, dtype=np.int64), np.empty(folds, dtype=np.int64)
     j = 0
     for train_size, test_size in zip(train_ind, test_ind):
-        
+
         train_s[j] = train_size.shape[0]
         test_s[j] = test_size.shape[0]
         j += 1 
-
+    
+    
     MSE_train = np.empty(degrees)
     MSE_test = np.empty(degrees)
     bias = np.zeros(degrees)
@@ -47,18 +52,18 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
         pred_test_avg = []
         z_train_set = []
         z_test_set = []
-        var_avg = []
-        bias_avg = []
+        var_avg = 0
+        bias_avg = 0
         training_error = 0 
         test_error = 0
         #print(f'Polynomial degree {degree}')
         
         for train_indx, test_indx in zip(train_ind, test_ind):
-            
+
             x_train, z_train = X[train_indx, :i], z[train_indx]
-            
+
             x_test, z_test = X[test_indx, :i], z[test_indx]
-           
+            
             z_train_set.append(z_train)
             z_test_set.append(z_test)
             
@@ -72,27 +77,27 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
 
             training_error += MSE(z_train, z_pred_train)
             test_error += MSE(z_test, z_pred_test)
-            bias_avg.append(np.mean((z_test - np.mean(z_pred_test, keepdims=True))**2))
-            var_avg.append(np.mean(np.var(z_pred_test, keepdims=True)))
-     
+            bias_avg +=  np.mean((z_test - np.mean(z_pred_test, keepdims=True))**2)
+            var_avg += np.mean(np.var(z_pred_test, keepdims=True))
         i += i2 
         i2 += 1
+        
+        smallest_train = 100000
+        train_id = 100
+        for i in range(len(pred_train_avg)): 
+            if len(pred_train_avg[i]) < smallest_train:
+                
+                smallest_train = len(pred_train_avg[i])
+                #print(smallest_train)
+                train_id = i
+        #print(smallest_train)
+        #print(train_id)
 
-        testInd = min([test.shape for test in pred_test_avg])
-        testInd = [i for i in range(len(pred_test_avg)) if pred_test_avg[i].shape == testInd][0]
-        tst = np.concatenate((z_test_set[:testInd] + z_test_set[testInd+1:]))
 
-        trainInd = min([train.shape for train in pred_train_avg])
-        trainInd = [i for i in range(len(pred_train_avg)) if pred_train_avg[i].shape == trainInd][0]
-        trn = np.concatenate((z_train_set[:trainInd] + z_train_set[trainInd+1:]))
-
-        tst_pred = np.concatenate((pred_test_avg[:testInd] + pred_test_avg[testInd+1:]))
-        trn_pred = np.concatenate((pred_train_avg[:trainInd] + pred_train_avg[trainInd+1:]))
-
-        MSE_train[degree-1] = np.mean(np.mean((trn-trn_pred)**2, axis=0, keepdims=True))#training_error/folds#
-        MSE_test[degree-1] = np.mean(np.mean((tst-tst_pred)**2, axis=0, keepdims=True)) #+ np.mean(np.mean((z_test_set[testInd]-pred_test_avg[testInd])**2, axis=0, keepdims=True))#test_error/n_bootstest_error/folds#
-        bias[degree-1] =  np.mean((tst - np.mean(tst_pred, axis=0, keepdims=True))**2) #+ np.mean((z_test_set[testInd] - np.mean(pred_test_avg[testInd], axis=0, keepdims=True))**2)
-        variance[degree-1] = np.mean(np.var(tst_pred, keepdims=True)) #+ np.mean(np.var(pred_test_avg[testInd], axis=0, keepdims=True))
+        MSE_train[degree-1] = training_error/folds#np.mean(np.mean((np.array(z_train_set[:folds-1])-np.array(pred_train_avg[:folds-1]))**2, axis=0, keepdims=True))    
+        MSE_test[degree-1] = test_error/folds #np.mean(np.mean((np.array(z_test_set[:folds-1])-np.array(pred_test_avg[:folds-1]))**2, axis=0, keepdims=True))   
+        bias[degree-1] =  bias_avg/folds#np.mean((z_test_set - np.mean(np.array(z_pred_test), axis=0, keepdims=True))**2) #bias_avg/folds 
+        variance[degree-1] = var_avg/folds#np.mean(np.var(pred_test_avg, keepdims=True)) #+ np.mean(np.var(pred_test_avg[folds-1], axis=0, keepdims=True)) #var_avg/folds
         polydegree[degree-1] = degree
 
     return bias, variance, MSE_train, MSE_test, polydegree
@@ -121,6 +126,6 @@ def plot_OLS_boot_figs(*args):
 # Good values for the random seed variable r_seed => [2, 3, 17 
 # Size of dataset good for the analysis of bias-variance trade-off => 10
 
-bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=4, folds=10)
+bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=2, folds=8)
 
 plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
