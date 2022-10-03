@@ -81,18 +81,6 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
             var_avg += np.mean(np.var(z_pred_test, keepdims=True))
         i += i2 
         i2 += 1
-        
-        smallest_train = 100000
-        train_id = 100
-        for i in range(len(pred_train_avg)): 
-            if len(pred_train_avg[i]) < smallest_train:
-                
-                smallest_train = len(pred_train_avg[i])
-                #print(smallest_train)
-                train_id = i
-        #print(smallest_train)
-        #print(train_id)
-
 
         MSE_train[degree-1] = training_error/folds#np.mean(np.mean((np.array(z_train_set[:folds-1])-np.array(pred_train_avg[:folds-1]))**2, axis=0, keepdims=True))    
         MSE_test[degree-1] = test_error/folds #np.mean(np.mean((np.array(z_test_set[:folds-1])-np.array(pred_test_avg[:folds-1]))**2, axis=0, keepdims=True))   
@@ -126,6 +114,6 @@ def plot_OLS_boot_figs(*args):
 # Good values for the random seed variable r_seed => [2, 3, 17 
 # Size of dataset good for the analysis of bias-variance trade-off => 10
 
-bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=2, folds=8)
+bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=4, folds=10)
 
 plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
