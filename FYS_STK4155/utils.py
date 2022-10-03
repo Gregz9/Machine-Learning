@@ -97,6 +97,11 @@ def compute_optimal_parameters_inv(X, y):
     beta = beta@(y.ravel())
     return beta
 
+def compute_betas_ridge(X, y, lambda_):
+    A = np.linalg.pinv(X.T@X + lambda_)@X.T
+    beta = A@y.ravel()
+    return beta
+
 def predict(X, beta, intercept=0): 
     franke_pred = np.array(())
     for i in range(X.shape[0]):
