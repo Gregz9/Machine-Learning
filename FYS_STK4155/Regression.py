@@ -11,4 +11,7 @@ class Regression:
         self.resampling_type = resampling_type
         self.scaling = scaling
         self.lambdas_ = lambas_
+        
+    def generate_data(): 
+        pass
 
