@@ -70,8 +70,8 @@ def Hastie():
     plt.legend()
     plt.show()
 
-def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True): 
-
+def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, r_seed=427): 
+    np.random.seed(r_seed)
     x, y = generate_determ_data(n_points)
     z = FrankeFunction(x,y,noise=noisy)
 
@@ -132,7 +132,7 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True):
             training_error += MSE(z_train, z_pred_train)
             test_error += MSE(z_test, z_pred_test)
     
-        print("Time used %s seconds" % (time.time() - start_time))
+        
         MSE_train_list[degree-1] = np.mean(np.mean((pred_train_avg-z_train)**2, axis=0, keepdims=True))#training_error/n_boots
         MSE_test_list[degree-1] = np.mean(np.mean((pred_test_avg-z_test)**2, axis=0, keepdims=True))#test_error/n_boots
         polydegree[degree-1] = degree
@@ -164,14 +164,13 @@ def plot_OLS_boot_figs(*args):
     axs[0,1].legend()
 
     plt.show() 
-#np.random.seed(1911)
-np.random.seed(17)
+
 #bias,var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=20, seed=9)
-bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=10, n_boots=100)
+bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=11, n_boots=100, r_seed=79)
 plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
 
 # Random seeds list when using create_X
-# Good random seeds = [2, 4, 5, 9, 14, 17
+# Good random seeds = [2, 4, 5, 9, 14, 17, 79
 # Good, but some random behavoiur of data sets = [7, 8, 15 
 # Medium random seeds = [10, 12, 1911, 16, 19, 20
 # Weak random seeds = [6, 11, 31, 18

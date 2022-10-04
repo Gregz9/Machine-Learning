@@ -65,7 +65,7 @@ def create_X(x, y, n):
 		y = np.ravel(y)
 
 	N = len(x)
-	l = int((n+1)*(n+2)/2)		# Number of elements in beta
+	l = int((n+1)*(n+2)/2)
 	X = np.zeros((N,l))
 
 	for i in range(1,n+1):
@@ -105,7 +105,7 @@ def compute_betas_ridge(X, y, lambda_):
 def predict(X, beta, intercept=0): 
     franke_pred = np.array(())
     for i in range(X.shape[0]):
-        franke_pred = np.append(franke_pred, np.sum(X[i]*beta) + intercept)
+        franke_pred = np.append(franke_pred, (X[i]@beta) + intercept)
 
     return franke_pred
 

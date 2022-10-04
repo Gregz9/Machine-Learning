@@ -43,12 +43,11 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
         bias_avg = []
         training_error = 0 
         test_error = 0
-        #print(f'Polynomial degree {degree}')
+        print(f'Polynomial degree {degree}')
         
         for train_indx, test_indx in zip(train_ind, test_ind):
             
             x_train, z_train = X[train_indx, :i], z[train_indx]
-            
             x_test, z_test = X[test_indx, :i], z[test_indx]
            
             z_train_set.append(z_train)
@@ -57,16 +56,13 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
             betas = compute_optimal_parameters(x_train, z_train)
             z_pred_train = predict(x_train, betas)
             z_pred_test = predict(x_test, betas)
-           
 
             pred_train_avg.append(z_pred_train)
             pred_test_avg.append(z_pred_test)
 
             training_error += MSE(z_train, z_pred_train)
             test_error += MSE(z_test, z_pred_test)
-            bias_avg.append(np.mean((z_test - np.mean(z_pred_test, keepdims=True))**2))
-            var_avg.append(np.mean(np.var(z_pred_test, keepdims=True)))
-     
+
         i += i2 
         i2 += 1
 
@@ -82,21 +78,13 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
             tst_pred = np.concatenate((pred_test_avg[:testInd] + pred_test_avg[testInd+1:]))
             trn_pred = np.concatenate((pred_train_avg[:trainInd] + pred_train_avg[trainInd+1:]))
 
-            MSE_train[degree-1] =  np.mean(np.mean((trn-trn_pred)**2, axis=0, keepdims=True))  #training_error/folds
-            MSE_test[degree-1] = np.mean(np.mean((tst-tst_pred)**2, axis=0, keepdims=True)) #test_error/folds
-            if include_wrong_calc:
-                bias[degree-1] =  np.mean((tst - np.mean(tst_pred, axis=0, keepdims=True))**2) + np.mean((z_test_set[testInd] - np.mean(pred_test_avg[testInd], axis=0, keepdims=True))**2)
-                variance[degree-1] = np.mean(np.var(tst_pred, keepdims=True)) + np.mean(np.var(pred_test_avg[testInd], axis=0, keepdims=True))
-            else: 
-                bias[degree-1] =  np.mean((tst - np.mean(tst_pred, axis=0, keepdims=True))**2)
-                variance[degree-1] = np.mean(np.var(tst_pred, keepdims=True))
+            MSE_train[degree-1] =  np.mean(np.mean((trn-trn_pred)**2, axis=0, keepdims=True))              
+            MSE_test[degree-1] = np.mean(np.mean((tst-tst_pred)**2, axis=0, keepdims=True)) 
             polydegree[degree-1] = degree
         else: 
 
-            MSE_train[degree-1] = training_error/folds #np.mean(np.mean((trn-trn_pred)**2, axis=0, keepdims=True))#training_error/folds#
-            MSE_test[degree-1] = test_error/folds #np.mean(np.mean((tst-tst_pred)**2, axis=0, keepdims=True)) #+ np.mean(np.mean((z_test_set[testInd]-pred_test_avg[testInd])**2, axis=0, keepdims=True))#test_error/n_bootstest_error/folds#
-            bias[degree-1] =  np.mean((z_test_set - np.mean(pred_test_avg, axis=0, keepdims=True))**2) 
-            variance[degree-1] = np.mean(np.var(pred_test_avg, keepdims=True)) 
+            MSE_train[degree-1] = training_error/folds 
+            MSE_test[degree-1] = test_error/folds 
             polydegree[degree-1] = degree
 
     return bias, variance, MSE_train, MSE_test, polydegree
@@ -107,24 +95,17 @@ def plot_OLS_boot_figs(*args):
     fig, axs = plt.subplots(2,2)
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
 
-    axs[0,0].plot(args[4], args[0], 'b', label='MSE_train') 
-    axs[0,0].plot(args[4], args[1], 'r', label='MSE_test')
+    axs[0,0].plot(args[2], args[0], 'b', label='MSE_train') 
+    axs[0,0].plot(args[2], args[1], 'r', label='MSE_test')
     axs[0,0].set_xlabel('Polynomial order')
     axs[0,0].set_ylabel('Mean Squared Error')
     axs[0,0].legend()
-    
-    axs[0,1].plot(args[4], args[1], 'b', label='MSE_test') 
-    axs[0,1].plot(args[4], args[2], 'g', label='variance')
-    axs[0,1].plot(args[4], args[3], 'y', label='bias')
-    axs[0,1].set_xlabel('Polynomial order')
-    #axs[0,1].set_ylabel('R2 Score')
-    axs[0,1].legend()
     
     plt.show() 
 
 # Good values for the random seed variable r_seed => [2, 3, 17 
 # Size of dataset good for the analysis of bias-variance trade-off => 10
 
-bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=4, folds=9)
+bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=79, folds=10)
 
-plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
+plot_OLS_boot_figs(MSE_train, MSE_test, pol)

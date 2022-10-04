@@ -112,6 +112,7 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
     #print(X_test)
     print("Time used %s seconds" % (time.time() - start_time))
     return MSE_train, MSE_test, bias_, variance_, polydegree
+#MSE_train, MSE_test, deg, bias_, variance_ = Ridge_regression(r_seed=427, n_points=10, n_boots=100, degrees=10)
 
 def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False, noisy=True, r_seed=427, include_wrong_calc=False):
     np.random.seed(r_seed)
@@ -196,8 +197,5 @@ def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False
 
     return MSE_train, MSE_test, bias_, variance_, polydegree
 
-#MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_Kfold(folds=10, r_seed=79)
-MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_bootstrap(r_seed=79, n_points=20, n_boots=100, degrees=11) 
-plot_figs(MSE_train, MSE_test, bias_, variance_, deg)
-
-# good random_seeds = [79, 
+MSE_train, MSE_test, bias, var, deg = Ridge_reg_Kfold(folds=9, r_seed=427)
+plot_figs(MSE_train, MSE_test, bias, var, deg)
