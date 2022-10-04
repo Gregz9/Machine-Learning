@@ -66,28 +66,11 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
         i += i2 
         i2 += 1
 
-        if n_points**2%folds != 0:
-            testInd = min([test.shape for test in pred_test_avg])
-            testInd = [i for i in range(len(pred_test_avg)) if pred_test_avg[i].shape == testInd][0]
-            tst = np.concatenate((z_test_set[:testInd] + z_test_set[testInd+1:]))
+        MSE_train[degree-1] = training_error/folds 
+        MSE_test[degree-1] = test_error/folds 
+        polydegree[degree-1] = degree
 
-            trainInd = min([train.shape for train in pred_train_avg])
-            trainInd = [i for i in range(len(pred_train_avg)) if pred_train_avg[i].shape == trainInd][0]
-            trn = np.concatenate((z_train_set[:trainInd] + z_train_set[trainInd+1:]))
-
-            tst_pred = np.concatenate((pred_test_avg[:testInd] + pred_test_avg[testInd+1:]))
-            trn_pred = np.concatenate((pred_train_avg[:trainInd] + pred_train_avg[trainInd+1:]))
-
-            MSE_train[degree-1] =  np.mean(np.mean((trn-trn_pred)**2, axis=0, keepdims=True))              
-            MSE_test[degree-1] = np.mean(np.mean((tst-tst_pred)**2, axis=0, keepdims=True)) 
-            polydegree[degree-1] = degree
-        else: 
-
-            MSE_train[degree-1] = training_error/folds 
-            MSE_test[degree-1] = test_error/folds 
-            polydegree[degree-1] = degree
-
-    return bias, variance, MSE_train, MSE_test, polydegree
+    return MSE_train, MSE_test, polydegree
 
 
 def plot_OLS_boot_figs(*args):
@@ -106,6 +89,6 @@ def plot_OLS_boot_figs(*args):
 # Good values for the random seed variable r_seed => [2, 3, 17 
 # Size of dataset good for the analysis of bias-variance trade-off => 10
 
-bias,var, MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=79, folds=10)
+MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=79, folds=10)
 
 plot_OLS_boot_figs(MSE_train, MSE_test, pol)
