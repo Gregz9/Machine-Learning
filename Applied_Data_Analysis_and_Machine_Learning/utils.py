@@ -102,6 +102,13 @@ def compute_betas_ridge(X, y, lambda_):
     beta = A@y.ravel()
     return beta
 
+def compute_lasso_parameteres(X,y, lambda_): 
+    pass
+
+def lasso_penalty(self, beta, lambda_): 
+    coef_l = lambda_*np.sum(np.abs(beta))
+    return coef_l*np.sign(beta)
+
 def predict(X, beta, intercept=0): 
     franke_pred = np.array(())
     for i in range(X.shape[0]):

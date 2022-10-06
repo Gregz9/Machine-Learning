@@ -17,18 +17,18 @@ import time
 from utils import ( 
     FrankeFunction, generate_determ_data, create_X, create_simple_X,
     KFold_split, generate_design_matrix, predict, compute_betas_ridge, MSE,
-    compute_optimal_parameters)
+    compute_optimal_parameters, compute_lasso_parameteres)
 
 def plot_figs(*args):
     fig, axs = plt.subplots(2,2)
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
 
-    axs[0,0].plot(args[4], args[0][5], 'b', label='MSE_train') 
-    axs[0,0].plot(args[4], args[1][5], 'r', label='MSE_test')
+    axs[0,0].plot(args[4][0], args[0][0], 'b', label='MSE_train') 
+    axs[0,0].plot(args[4][0], args[1][0], 'r', label='MSE_test')
     axs[0,0].set_xlabel('Polynomial order')
     axs[0,0].set_ylabel('Mean Squared Error')
     axs[0,0].legend()
-    axs[0,1].plot(args[4], args[1][5], 'b', label='MSE_test')
+    """axs[0,1].plot(args[4], args[1][5], 'b', label='MSE_test')
     axs[0,1].plot(args[4], args[2][5], 'y', label='bias')
     axs[0,1].plot(args[4], args[3][5], 'g', label='variance')
     axs[0,1].set_xlabel('Polynomial order')
@@ -46,7 +46,7 @@ def plot_figs(*args):
     axs[1,1].plot(args[4], args[3][0], 'g', label='variance')
     axs[1,1].set_xlabel('Polynomial order')
     axs[1,1].set_ylabel('Mean Squared Error')
-    axs[1,1].legend()
+    axs[1,1].legend()"""
 
     plt.show()
 
@@ -86,7 +86,7 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
 
                 X_, z_ = resample(X_train, z_train, replace=True)
                
-                betas_ridge  = compute_betas_ridge(X_, z_, lambdas[k]*I)
+                betas_ridge  = compute_lasso_parameteres(X_, z_, lambdas[k])
 
                 z_pred_train = predict(X_train, betas_ridge)
                 z_pred_test = predict(X_test, betas_ridge)
@@ -112,7 +112,11 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
     #print(X_test)
     print("Time used %s seconds" % (time.time() - start_time))
     return MSE_train, MSE_test, bias_, variance_, polydegree
-#MSE_train, MSE_test, deg, bias_, variance_ = Ridge_regression(r_seed=427, n_points=10, n_boots=100, degrees=10)
+MSE_train, MSE_test, deg, bias_, variance_ = Ridge_reg_bootstrap(r_seed=427, n_points=10, n_boots=100, degrees=10)
+print(MSE_train[0].shape)
+print(MSE_test[0].shape)
+print(deg[0].shape)
+plot_figs(MSE_train, MSE_test, bias_, variance_, deg)
 
 def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False, noisy=True, r_seed=427, include_wrong_calc=False):
     np.random.seed(r_seed)
@@ -197,5 +201,5 @@ def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False
 
     return MSE_train, MSE_test, bias_, variance_, polydegree
 
-MSE_train, MSE_test, bias, var, deg = Ridge_reg_Kfold(folds=9, r_seed=427)
-plot_figs(MSE_train, MSE_test, bias, var, deg)
+#MSE_train, MSE_test, bias, var, deg = Ridge_reg_Kfold(folds=9, r_seed=427)
+#plot_figs(MSE_train, MSE_test, bias, var, deg)

@@ -66,7 +66,7 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
     
     start_time = time.time()
     for k in range(len(lambdas)): 
-        #print(f'Lamda value:{lambda_}')
+        print(f'Lamda value:{lambdas[k]}')
         MSE_train_list = np.empty(degrees)
         MSE_test_list = np.empty(degrees)
         bias = np.zeros(degrees)
@@ -74,6 +74,7 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
         polydegree = np.zeros(degrees)
         i, i2 = 3, 3
         for degree in range(1, degrees+1): 
+            print(i)
             #print(f'Polynomial degree {degree}')
             I = np.eye(i,i)
             X_train, X_test, z_train, z_test = train_test_split(X[:, :i], z.ravel(), test_size=0.2)
@@ -177,4 +178,4 @@ def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False
 MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_bootstrap(r_seed=79, n_points=20, n_boots=100, degrees=11) 
 plot_figs(MSE_train, MSE_test, bias_, variance_, deg)
 
-# good random_seeds = [79, 
+# good random_seeds = [79, 227
