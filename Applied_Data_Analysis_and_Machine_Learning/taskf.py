@@ -91,8 +91,8 @@ def Lasso_reg_bootstrap(n_points=20, degrees=11, n_boots=100, n_lambdas=2, sacal
     x,y = generate_determ_data(size=n_points)
     z = FrankeFunction(x,y, noise=noisy)
     X=create_X(x,y,degrees)
-    lamb_= np.logspace(-12,-6, n_lambdas)
-    print(len)
+    lamb_= np.logspace(-5,-5, n_lambdas)
+    
     
     scaler = StandardScaler()
     MSE_train = np.empty((n_lambdas, degrees))
@@ -109,10 +109,9 @@ def Lasso_reg_bootstrap(n_points=20, degrees=11, n_boots=100, n_lambdas=2, sacal
         bias = np.zeros(degrees)
         variance = np.zeros(degrees)
         polydegree = np.zeros(degrees)
-        lasso = Lasso(alpha=lamb_[k],  fit_intercept=False, max_iter=10000)
+        lasso = Lasso(alpha=lamb_[k], max_iter=10000, fit_intercept=False, tol=1e-1)
         
         for degree in range(1, degrees+1): 
-            print(i)
             #print(f'Polynomial degree {degree}')
             X_train, X_test, z_train, z_test = train_test_split(X[:, :i], z.ravel(), test_size=0.2)
             pred_train_avg = np.empty((n_boots, z_train.shape[0]))
@@ -121,7 +120,7 @@ def Lasso_reg_bootstrap(n_points=20, degrees=11, n_boots=100, n_lambdas=2, sacal
             for boot in range(n_boots):
 
                 X_, z_ = resample(X_train, z_train, replace=True)
-
+            
                 lasso.fit(X_, z_)
                 z_pred_train = lasso.predict(X_train)
                 z_pred_test = lasso.predict(X_test)
@@ -147,6 +146,6 @@ def Lasso_reg_bootstrap(n_points=20, degrees=11, n_boots=100, n_lambdas=2, sacal
     return MSE_train, MSE_test, bias_, variance_, polydegree
 
 #MSE_train, MSE_test, degs = Lasso_reg()
-MSE_train, MSE_test, bias_, var_, degs = Lasso_reg_bootstrap(n_points=20,r_seed=79, degrees=11, n_boots=20)
+MSE_train, MSE_test, bias_, var_, degs = Lasso_reg_bootstrap(n_points=20,r_seed=79, degrees=11, n_boots=100)
 plot_figs(MSE_train, MSE_test, bias_, var_, degs)
 #color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
