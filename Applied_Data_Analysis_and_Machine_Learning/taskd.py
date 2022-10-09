@@ -53,12 +53,11 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
                 z_train_mean = 0 
             
             betas = compute_optimal_parameters(x_train, z_train_centered)
-            z_pred_train = predict(x_train, betas)
-            z_pred_test = predict(x_test, betas)
+            z_pred_train = predict(x_train, betas, z_train_mean)
+            z_pred_test = predict(x_test, betas, z_train_mean)
 
             pred_train_avg.append(z_pred_train)
             pred_test_avg.append(z_pred_test)
-
             training_error += MSE(z_train, z_pred_train)
             test_error += MSE(z_test, z_pred_test)
 

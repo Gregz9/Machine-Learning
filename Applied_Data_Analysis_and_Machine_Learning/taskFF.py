@@ -116,12 +116,12 @@ def plot_kfold_figs(MSE_train, MSE_test, polydegrees, lambdas_ ):
     plt.show()
 
 
-def lasso_reg_boot(n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True, r_seed=79): 
+def lasso_reg_boot(n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True, centering=False, r_seed=79): 
 
     np.random.seed(r_seed)
     x,y = generate_determ_data(n_points)
     z =FrankeFunction(x,y, noise=noisy)
-    X = create_X(x,y, degrees)
+    X = create_X(x,y, degrees, centering=centering)
     lambdas_ = np.logspace(-12, -3, n_lambdas)
     
     MSE_train = np.empty((n_lambdas, degrees))
@@ -130,37 +130,38 @@ def lasso_reg_boot(n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True
     variance = np.empty((n_lambdas, degrees))
 
     for f in range(len(lambdas_)): 
-        i, i2 = 3,3
         MSE_train_list = np.empty(degrees)
         MSE_test_list = np.empty(degrees)
         bias_ = np.empty(degrees)
         variance_ = np.empty(degrees)
         polydegrees = np.empty(degrees)
-        lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=200)
-        
 
         for degree in range(1, degrees+1):
-           
-            x_train, x_test, z_train, z_test = train_test_split(X[:,:i], z.ravel(), test_size=0.2)
-            x_train_mean = np.mean(x_train, axis=0) 
-            z_train_mean = np.mean(z_train, axis=0)     
-
-            x_train_centered = x_train - x_train_mean
-            z_train_centered = z_train - z_train_mean
-            x_test_centered = x_test - x_train_mean 
+            print(f'Processing polynomial of {degree} degree ')
+            x_train, x_test, z_train, z_test = train_test_split(X[:,:int((degree+1)*(degree+2)/2)], z.ravel(), test_size=0.2)
+            if centering: 
+                lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=200)
+                x_train_mean = np.mean(x_train, axis=0) 
+                z_train_mean = np.mean(z_train, axis=0)  
+                x_train -= x_train_mean
+                x_test -= x_train_mean
+                z_train_centered = z_train - z_train_mean
+            else: 
+                lasso = Lasso(lambdas_[f], fit_intercept=False, max_iter=200)
+                z_train_mean = 0
+                z_train_centered = z_train
 
             pred_train = np.empty((n_boots, z_train.shape[0]))
             pred_test = np.empty((n_boots, z_test.shape[0]))
 
             for boot in range(n_boots):
-                x_, z_ = resample(x_train_centered, z_train_centered)
+                x_, z_ = resample(x_train, z_train_centered)
                 lasso.fit(x_, z_)
 
-                pred_train[boot, :] = lasso.predict(x_train_centered) + z_train_mean
-                pred_test[boot, :] = lasso.predict(x_test_centered) + z_train_mean
+                pred_train[boot, :] = lasso.predict(x_train) + z_train_mean
+                pred_test[boot, :] = lasso.predict(x_test) + z_train_mean
 
-            i+= i2
-            i2 += 1
+ 
             MSE_train_list[degree-1] = np.mean(np.mean((z_train-pred_train)**2, axis=0, keepdims=True))
             MSE_test_list[degree-1] = np.mean(np.mean((z_test-pred_test)**2, axis=0, keepdims=True))
             bias_[degree-1] = np.mean((z_test - np.mean(pred_test, axis=0, keepdims=True))**2)
@@ -224,7 +225,7 @@ def lasso_reg_kFold(n_points=20, degrees=10, folds=5, n_lambdas=6, noisy=True, r
 #plot_kfold_figs(MSE_train, MSE_test, polydegrees, lambdas_)
 
 
-MSE_train, MSE_test, bias, variance, polydegrees, lambdas_ = lasso_reg_boot(n_points=20, r_seed=79)
+MSE_train, MSE_test, bias, variance, polydegrees, lambdas_ = lasso_reg_boot(n_points=20, r_seed=79, centering=True)
 plot_bootstrap_figs(MSE_train, MSE_test, bias, variance, polydegrees, lambdas_)
 
 

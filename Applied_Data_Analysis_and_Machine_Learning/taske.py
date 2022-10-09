@@ -15,8 +15,8 @@ from numpy.core import _asarray
 from sklearn.utils import resample
 import time
 from utils import ( 
-    FrankeFunction, generate_determ_data, create_X, create_simple_X,
-    KFold_split, generate_design_matrix, predict, compute_betas_ridge, MSE,
+    FrankeFunction, generate_determ_data, create_X,
+    KFold_split, predict, compute_betas_ridge, MSE,
     compute_optimal_parameters)
 
 def plot_figs(*args):
@@ -47,6 +47,24 @@ def plot_figs(*args):
     axs[1,1].set_xlabel('Polynomial order')
     axs[1,1].set_ylabel('Mean Squared Error')
     axs[1,1].legend()
+
+    plt.show()
+
+def plot_figs_kFold(MSE_train, MSE_test, degs):
+    fig, axs = plt.subplots(1,2)
+    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
+
+    axs[0].plot(degs, MSE_train[5], 'b', label='MSE_train') 
+    axs[0].plot(degs, MSE_test[5], 'r', label='MSE_test')
+    axs[0].set_xlabel('Polynomial order')
+    axs[0].set_ylabel('Mean Squared Error')
+    axs[0].legend()
+
+    axs[1].plot(degs, MSE_train[0], 'b', label='MSE_train') 
+    axs[1].plot(degs, MSE_test[0], 'r', label='MSE_test')
+    axs[1].set_xlabel('Polynomial order')
+    axs[1].set_ylabel('Mean Squared Error')
+    axs[1].legend()
 
     plt.show()
 
@@ -88,7 +106,7 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
 
             for boot in range(n_boots):
 
-                X_, z_ = resample(x_train, z_train_centered, replace=True)
+                X_, z_ = resample(x_train, z_train_centered)
                 betas_ridge  = compute_betas_ridge(X_, z_, lambdas[k])
 
                 z_pred_train = predict(x_train, betas_ridge, z_train_mean)
@@ -110,55 +128,50 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
 
     return MSE_train, MSE_test, bias_, variance_, polydegree
 
-def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False, noisy=True, r_seed=427, include_wrong_calc=False):
+def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False, noisy=True, r_seed=79):
     np.random.seed(r_seed)
     x,y = generate_determ_data(n_points)
     z= FrankeFunction(x,y,noise=noisy)
-    X = create_X(x,y,degrees)
+    X = create_X(x,y,degrees, centering=scaling)
     lambdas = np.logspace(-12,-3,n_lambdas)
     z=z.ravel()
-    #train_ind, test_ind = KFold_split(z=z, k=folds)
-    kfold = KFold(n_splits=folds)
+    train_ind, test_ind = KFold_split(z=z, k=folds)
 
     MSE_train = np.empty((n_lambdas, degrees))
     MSE_test = np.empty((n_lambdas, degrees))
-    bias_ = np.zeros((n_lambdas, degrees))
-    variance_ = np.zeros((n_lambdas, degrees))
     polydegree = np.zeros(degrees)
 
     for k in range(len(lambdas)): 
-        #print(f'Lamda value:{lambda_}')
+        print(f'Lamda value:{lambdas[k]}')
         MSE_train_list = np.empty(degrees)
         MSE_test_list = np.empty(degrees)
-        bias = np.zeros(degrees)
-        variance = np.zeros(degrees)
        
-        i, i2 = 3, 3
         for degree in range(1, degrees+1): 
-            #print(f'Polynomial degree {degree}')
-            I = np.eye(i,i)
-            pred_train_avg = []
-            pred_test_avg = []
-            z_train_set = []
-            z_test_set = []
+            print(f'Polynomial degree {degree}')
+
             training_error = 0 
             test_error = 0 
 
-            for train_indx, test_indx in kfold.split(X):#zip(train_ind, test_ind):
+            for train_indx, test_indx in zip(train_ind, test_ind):
                 
-                x_train, z_train = X[train_indx, :i], z[train_indx]
-                x_test, z_test = X[test_indx, :i], z[test_indx]
-                z_train_set.append(z_train)
-                z_test_set.append(z_test)
+                x_train, z_train = X[train_indx, :int((degree+1)*(degree+2)/2)], z[train_indx]
+                x_test, z_test = X[test_indx, :int((degree+1)*(degree+2)/2)], z[test_indx]
+                if scaling:
+                    x_train_mean = np.mean(x_train, axis=0) 
+                    z_train_mean = np.mean(z_train, axis=0)  
+                    x_train -= x_train_mean
+                    x_test -= x_train_mean
+                    z_train_centered = z_train - z_train_mean
+                else: 
+                    z_train_centered = z_train
+                    z_train_mean = 0 
 
-                betas = compute_betas_ridge(x_train, z_train, lambdas[k]*I)
+                betas = compute_betas_ridge(x_train, z_train_centered, lambdas[k])
                 
-                z_pred_train = predict(x_train, betas)
-                z_pred_test = predict(x_test, betas)
+                z_pred_train = predict(x_train, betas, z_train_mean)
+                z_pred_test = predict(x_test, betas, z_train_mean)
                 training_error += MSE(z_train, z_pred_train)
                 test_error += MSE(z_test, z_pred_test)
-            i += i2 
-            i2 += 1
 
             MSE_train_list[degree-1] = training_error/folds
             MSE_test_list[degree-1] = test_error/folds 
@@ -166,13 +179,11 @@ def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False
 
         MSE_train[k] = MSE_train_list
         MSE_test[k] = MSE_test_list
-        bias_[k] = bias
-        variance_[k] = variance
 
     return MSE_train, MSE_test, polydegree
 
-#MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_Kfold(folds=10, r_seed=79)
-MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_bootstrap(r_seed=79, n_points=20, n_boots=100, degrees=11) 
-plot_figs(MSE_train, MSE_test, bias_, variance_, deg)
+MSE_train, MSE_test, deg = Ridge_reg_Kfold(folds=10, r_seed=79, scaling=True)
+#MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_bootstrap(r_seed=79, n_points=20, n_boots=100, degrees=11) 
+plot_figs_kFold(MSE_train, MSE_test, deg)
 
 # good random_seeds = [79, 227

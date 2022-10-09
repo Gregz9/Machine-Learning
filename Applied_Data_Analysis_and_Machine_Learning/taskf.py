@@ -1,222 +1,231 @@
-from distutils.command.build_scripts import first_line_re
-from random import random
-import numpy as np
-from Regression import Reg_model 
-from sklearn.model_selection import train_test_split
-from utils import ( 
-    FrankeFunction, generate_determ_data, create_X, create_simple_X,
-    KFold_split, generate_design_matrix, predict, compute_betas_ridge, MSE,
-    compute_optimal_parameters)
-import matplotlib.pyplot as plt
-from sklearn.metrics import mean_squared_error
-from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from operator import ge
+import numpy as np 
+from sklearn.model_selection import train_test_split, KFold
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from sklearn.utils import resample
-from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import Lasso
+import matplotlib.pyplot as plt
+from utils import (FrankeFunction, generate_determ_data, create_X, MSE)
 
-def plot_figs(*args):
-    fig, axs = plt.subplots(2,2)
-    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
+def plot_bootstrap_figs(MSE_train, MSE_test, bias, variance, polydegrees, lambdas_ ):
 
-    axs[0,0].plot(args[4], args[0][1], 'b', label='MSE_train') 
-    axs[0,0].plot(args[4], args[1][1], 'r', label='MSE_test')
-    axs[0,0].set_xlabel('Polynomial order')
-    axs[0,0].set_ylabel('Mean Squared Error')
+    fig, axs = plt.subplots(2,3)
+    fig.suptitle('MSE of lasso regression for varying values of lambda parameter')
+
+    axs[0,0].plot(polydegrees, MSE_train[0], 'g', label='MSE_train')
+    axs[0,0].plot(polydegrees, MSE_test[0], 'b', label='MSE_test')
+    axs[0,0].plot(polydegrees, bias[0], 'y', label='bias')
+    axs[0,0].plot(polydegrees, variance[0], 'r', label='variance')
+    axs[0,0].set_xlabel('Polynomial_order')
+    axs[0,0].set_ylabel('MSE')
+    axs[0,0].set_title(f'Lambda: {lambdas_[0]}')
     axs[0,0].legend()
-    axs[0,1].plot(args[4], args[1][1], 'b', label='MSE_test')
-    axs[0,1].plot(args[4], args[2][1], 'y', label='bias')
-    axs[0,1].plot(args[4], args[3][1], 'g', label='variance')
-    axs[0,1].set_xlabel('Polynomial order')
-    axs[0,1].set_ylabel('Mean Squared Error')
+
+    axs[0,1].plot(polydegrees, MSE_train[1], 'g', label='MSE_train')
+    axs[0,1].plot(polydegrees, MSE_test[1], 'b', label='MSE_test')
+    axs[0,1].plot(polydegrees, bias[1], 'y', label='bias')
+    axs[0,1].plot(polydegrees, variance[1], 'r', label='variance')
+    axs[0,1].set_xlabel('Polynomial_order')
+    axs[0,1].set_ylabel('MSE')
+    axs[0,1].set_title(f'Lambda: {lambdas_[1]}')
     axs[0,1].legend()
 
-    axs[1,0].plot(args[4], args[0][0], 'b', label='MSE_train') 
-    axs[1,0].plot(args[4], args[1][0], 'r', label='MSE_test')
-    axs[1,0].set_xlabel('Polynomial order')
-    axs[1,0].set_ylabel('Mean Squared Error')
+    axs[0,2].plot(polydegrees, MSE_train[2], 'g', label='MSE_train')
+    axs[0,2].plot(polydegrees, MSE_test[2], 'b', label='MSE_test')
+    axs[0,2].plot(polydegrees, bias[2], 'y', label='bias')
+    axs[0,2].plot(polydegrees, variance[2], 'r', label='variance')
+    axs[0,2].set_xlabel('Polynomial_order')
+    axs[0,2].set_ylabel('MSE')
+    axs[0,2].set_title(f'Lambda: {lambdas_[2]}')
+    axs[0,2].legend()
+
+    axs[1,0].plot(polydegrees, MSE_train[3], 'g', label='MSE_train')
+    axs[1,0].plot(polydegrees, MSE_test[3], 'b', label='MSE_test')
+    axs[1,0].plot(polydegrees, bias[3], 'y', label='bias')
+    axs[1,0].plot(polydegrees, variance[3], 'r', label='variance')
+    axs[1,0].set_xlabel('Polynomial_order')
+    axs[1,0].set_ylabel('MSE')
+    axs[1,0].set_title(f'Lambda: {lambdas_[3]}')
     axs[1,0].legend()
 
-    axs[1,1].plot(args[4], args[1][0], 'b', label='MSE_test')
-    axs[1,1].plot(args[4], args[2][0], 'y', label='bias')
-    axs[1,1].plot(args[4], args[3][0], 'g', label='variance')
-    axs[1,1].set_xlabel('Polynomial order')
-    axs[1,1].set_ylabel('Mean Squared Error')
+    axs[1,1].plot(polydegrees, MSE_train[4], 'g', label='MSE_train')
+    axs[1,1].plot(polydegrees, MSE_test[4], 'b', label='MSE_test')
+    axs[1,1].plot(polydegrees, bias[4], 'y', label='bias')
+    axs[1,1].plot(polydegrees, variance[4], 'r', label='variance')
+    axs[1,1].set_xlabel('Polynomial_order')
+    axs[1,1].set_ylabel('MSE')
+    axs[1,1].set_title(f'Lambda: {lambdas_[4]}')
     axs[1,1].legend()
 
+    axs[1,2].plot(polydegrees, MSE_train[5], 'g', label='MSE_train')
+    axs[1,2].plot(polydegrees, MSE_test[5], 'b', label='MSE_test')
+    axs[1,2].plot(polydegrees, bias[5], 'y', label='bias')
+    axs[1,2].plot(polydegrees, variance[5], 'r', label='variance')
+    axs[1,2].set_xlabel('Polynomial_order')
+    axs[1,2].set_ylabel('MSE')
+    axs[1,2].set_title(f'Lambda: {lambdas_[5]}')
+    axs[1,2].legend()
     plt.show()
 
-def Lasso_reg(n_points=20, degrees=10, n_boots=100, n_lambdas=6, sacaling=False, noisy=True, r_seed=79):
-    np.random.seed(r_seed) 
-    lamb_= np.logspace(-15, -10, n_lambdas)
+def plot_kfold_figs(MSE_train, MSE_test, polydegrees, lambdas_ ):
+    fig, axs = plt.subplots(2,3)
+    fig.suptitle('MSE of lasso regression for varying values of lambda parameter')
 
-    lasso = Reg_model(lambas_=lamb_, n_points=n_points, reg_type='lasso', degree=degrees)
+    axs[0,0].plot(polydegrees, MSE_train[0], 'g', label='MSE_train')
+    axs[0,0].plot(polydegrees, MSE_test[0], 'b', label='MSE_test')
+    axs[0,0].set_xlabel('Polynomial_order')
+    axs[0,0].set_ylabel('MSE')
+    axs[0,0].set_title(f'Lambda: {lambdas_[0]}')
+    axs[0,0].legend()
 
-    MSE_train = np.empty((n_lambdas, degrees))
-    MSE_test = np.empty((n_lambdas, degrees))
-    bias_ = np.zeros((n_lambdas, degrees))
-    variance_ = np.zeros((n_lambdas, degrees))
+    axs[0,1].plot(polydegrees, MSE_train[1], 'g', label='MSE_train')
+    axs[0,1].plot(polydegrees, MSE_test[1], 'b', label='MSE_test')
+    axs[0,1].set_xlabel('Polynomial_order')
+    axs[0,1].set_ylabel('MSE')
+    axs[0,1].set_title(f'Lambda: {lambdas_[1]}')
+    axs[0,1].legend()
 
-    for k in range(len(lasso.lambdas_)): 
-        i, i2 = 3, 3
-        print(f'Lamda value:{lasso.lambdas_[k]}')
-        
-        MSE_train_list = np.empty(degrees)
-        MSE_test_list = np.empty(degrees)
-        bias = np.zeros(degrees)
-        variance = np.zeros(degrees)
-        polydegree = np.zeros(degrees)
-        
-        for degree in range(1, degrees+1): 
-            #print(f'Polynomial degree {degree}')
-            X_train, X_test, z_train, z_test = train_test_split(lasso.X[:, :i], lasso.z.ravel(), test_size=0.2)
-            lasso.fit_data(X_train, z_train, lambda_=lasso.lambdas_[k])
-            z_pred_train = lasso.predict(X_train)
-            z_pred_test = lasso.predict(X_test)
+    axs[0,2].plot(polydegrees, MSE_train[2], 'g', label='MSE_train')
+    axs[0,2].plot(polydegrees, MSE_test[2], 'b', label='MSE_test')
+    axs[0,2].set_xlabel('Polynomial_order')
+    axs[0,2].set_ylabel('MSE')
+    axs[0,2].set_title(f'Lambda: {lambdas_[2]}')
+    axs[0,2].legend()
 
-            MSE_train_list[degree-1] = MSE(z_train, z_pred_train)
-            MSE_test_list[degree-1] = MSE(z_test, z_pred_test)
-            polydegree[degree-1] = degree
-            i += i2
-            i2 += 1 
-        MSE_train[k] = MSE_train_list
-        MSE_test[k] = MSE_test_list
-    return MSE_train, MSE_test, polydegreoe
+    axs[1,0].plot(polydegrees, MSE_train[3], 'g', label='MSE_train')
+    axs[1,0].plot(polydegrees, MSE_test[3], 'b', label='MSE_test')
+    axs[1,0].set_xlabel('Polynomial_order')
+    axs[1,0].set_ylabel('MSE')
+    axs[1,0].set_title(f'Lambda: {lambdas_[3]}')
+    axs[1,0].legend()
 
-#MSE_train, MSE_test, degs = Lasso_reg()
+    axs[1,1].plot(polydegrees, MSE_train[4], 'g', label='MSE_train')
+    axs[1,1].plot(polydegrees, MSE_test[4], 'b', label='MSE_test')
+    axs[1,1].set_xlabel('Polynomial_order')
+    axs[1,1].set_ylabel('MSE')
+    axs[1,1].set_title(f'Lambda: {lambdas_[4]}')
+    axs[1,1].legend()
+
+    axs[1,2].plot(polydegrees, MSE_train[5], 'g', label='MSE_train')
+    axs[1,2].plot(polydegrees, MSE_test[5], 'b', label='MSE_test')
+    axs[1,2].set_xlabel('Polynomial_order')
+    axs[1,2].set_ylabel('MSE')
+    axs[1,2].set_title(f'Lambda: {lambdas_[5]}')
+    axs[1,2].legend()
+    plt.show()
 
 
-def Lasso_reg_bootstrap(n_points=20, degrees=11, n_boots=100, n_lambdas=6, sacaling=False, noisy=True, r_seed=227):
-    np.random.seed(r_seed) 
-    x,y = generate_determ_data(size=n_points)
-    z = FrankeFunction(x,y, noise=True)
-    X=create_X(x,y,degrees)
-    X = np.delete(X,0,axis=1)
-    lamb_= np.logspace(-2,3, n_lambdas)
+def lasso_reg_boot(n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True, centering=False, r_seed=79): 
+
+    np.random.seed(r_seed)
+    x,y = generate_determ_data(n_points)
+    z =FrankeFunction(x,y, noise=noisy)
+    X = create_X(x,y, degrees, centering=centering)
+    lambdas_ = np.logspace(-12, -3, n_lambdas)
     
-    scaler = StandardScaler()
     MSE_train = np.empty((n_lambdas, degrees))
     MSE_test = np.empty((n_lambdas, degrees))
-    bias_ = np.zeros((n_lambdas, degrees))
-    variance_ = np.zeros((n_lambdas, degrees))
+    bias = np.empty((n_lambdas, degrees))
+    variance = np.empty((n_lambdas, degrees))
 
-    for k in range(len(lamb_)): 
-        i, i2 = 3, 3
-        print(f'Lamda value:{lamb_[k]}')
-        
+    for f in range(len(lambdas_)): 
         MSE_train_list = np.empty(degrees)
         MSE_test_list = np.empty(degrees)
-        bias = np.zeros(degrees)
-        variance = np.zeros(degrees)
-        polydegree = np.zeros(degrees)
-        lasso = Lasso(lamb_[k], fit_intercept=True )#, precompute=True)
-        #model = make_pipeline(PolynomialFeatures(degree=degrees), Lasso(lamb_[k], fit_intercept=False, precompute=True))
-        
-        for degree in range(1, degrees+1): 
-            #model = make_pipeline(PolynomialFeatures(degree=degrees), Lasso(lamb_[k], fit_intercept=False))
-        
-            #lasso = Lasso(lamb_[k], fit_intercept=False, precompute=True)
-            #print(f'Polynomial degree {degree}')
-            X_train, X_test, z_train, z_test = train_test_split(X[:,:i], z.ravel(), test_size=0.2)
-            x_train_mean = np.mean(X_train, axis=0) 
-            z_train_mean = np.mean(z_train, axis=0)
+        bias_ = np.empty(degrees)
+        variance_ = np.empty(degrees)
+        polydegrees = np.empty(degrees)
 
-            X_train_centered = X_train - x_train_mean
-            z_train_centered = z_train - z_train_mean
-            X_test_centered = X_test - x_train_mean 
+        for degree in range(1, degrees+1):
+            print(f'Processing polynomial of {degree} degree ')
+            x_train, x_test, z_train, z_test = train_test_split(X[:,:int((degree+1)*(degree+2)/2)], z.ravel(), test_size=0.2)
+            if centering: 
+                lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=200)
+                x_train_mean = np.mean(x_train, axis=0) 
+                z_train_mean = np.mean(z_train, axis=0)  
+                x_train -= x_train_mean
+                x_test -= x_train_mean
+                z_train_centered = z_train - z_train_mean
+            else: 
+                lasso = Lasso(lambdas_[f], fit_intercept=False, max_iter=200)
+                z_train_mean = 0
+                z_train_centered = z_train
 
-            pred_train_avg = np.empty((n_boots, z_train.shape[0]))
-            pred_test_avg = np.empty((n_boots, z_test.shape[0]))
-            training_error = 0 
-            test_error = 0
+            pred_train = np.empty((n_boots, z_train.shape[0]))
+            pred_test = np.empty((n_boots, z_test.shape[0]))
 
             for boot in range(n_boots):
-                print(boot)
+                x_, z_ = resample(x_train, z_train_centered)
+                lasso.fit(x_, z_)
 
-                X_, z_ = resample(X_train_centered, z_train_centered, replace=True)    
-            
-                lasso.fit(X_, z_)
-                z_pred_train = lasso.predict(X_train_centered) + z_train_mean
-                z_pred_test = lasso.predict(X_test_centered) + z_train_mean
-                #z_pred_test = lasso.predict(X_test)
+                pred_train[boot, :] = lasso.predict(x_train) + z_train_mean
+                pred_test[boot, :] = lasso.predict(x_test) + z_train_mean
 
-                pred_train_avg[boot, :] = z_pred_train
-                pred_test_avg[boot, :] = z_pred_test
-                training_error += MSE(z_train, z_pred_train)
-                test_error += MSE(z_test, z_pred_test)
-                
-            i += i2
-            i2 += 1 
+ 
+            MSE_train_list[degree-1] = np.mean(np.mean((z_train-pred_train)**2, axis=0, keepdims=True))
+            MSE_test_list[degree-1] = np.mean(np.mean((z_test-pred_test)**2, axis=0, keepdims=True))
+            bias_[degree-1] = np.mean((z_test - np.mean(pred_test, axis=0, keepdims=True))**2)
+            variance_[degree-1] = np.mean(np.var(pred_test, axis=0, keepdims=True))
+            polydegrees[degree-1] = degree
+        
+        MSE_train[f] = MSE_train_list
+        MSE_test[f] = MSE_test_list
+        bias[f] = bias_
+        variance[f] = variance_
+    return MSE_train, MSE_test, bias, variance, polydegrees, lambdas_
 
-            MSE_train_list[degree-1] = training_error/n_boots #np.mean(np.mean((z_train-pred_train_avg)**2, axis=0, keepdims=True))#training_error/n_boots
-            MSE_test_list[degree-1] = test_error/n_boots#np.mean(np.mean((z_test-pred_test_avg)**2, axis=0, keepdims=True))
-            bias[degree-1] = np.mean((z_test - np.mean(pred_test_avg, axis=0, keepdims=True))**2)
-            variance[degree-1] = np.mean(np.var(pred_test_avg, axis=0, keepdims=True))  
+def lasso_reg_kFold(n_points=20, degrees=10, folds=5, n_lambdas=6, noisy=True, r_seed=79): 
+
+    np.random.seed(r_seed)
+    x,y = generate_determ_data(n_points)
+    z = FrankeFunction(x,y, noise=True)
+    X = create_X(x,y, degrees)
+    lambdas_ = np.logspace(-6, -2, n_lambdas)
+    z=z.ravel()
+    kfold = KFold(n_splits=folds)
+
+    MSE_train = np.empty((n_lambdas, degrees))
+    MSE_test = np.empty((n_lambdas, degrees))
+
+    for f in range(len(lambdas_)): 
+        i, i2 = 3,3
+        MSE_train_list = np.empty(degrees)
+        MSE_test_list = np.empty(degrees)
+        polydegrees = np.empty(degrees)
+        lasso = Lasso(lambdas_[f], fit_intercept=False, max_iter=200)
+        
+
+        for degree in range(1, degrees+1):
            
-            polydegree[degree-1] = degree
-            
-        MSE_train[k] = MSE_train_list
-        MSE_test[k] = MSE_test_list
-        bias_[k] = bias
-        variance_[k] = variance
-  
-    return MSE_train, MSE_test, bias_, variance_, polydegree, lamb_
+            training_error = 0 
+            test_error = 0 
 
-#MSE_train, MSE_test, degs = Lasso_reg()
-MSE_train, MSE_test, bias_, var_, degs, lambdas = Lasso_reg_bootstrap(n_points=20, r_seed=79, degrees=11, n_boots=100)
+            for train_indx, test_indx in kfold.split(X):
 
-fig, axs = plt.subplots(2,3)
-color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
-fig.suptitle('Lasso for varying lambda values')
-axs[1,2].plot(degs, MSE_train[5], 'k', label='MSE_train') 
-axs[1,2].plot(degs, MSE_test[5], 'r', label='MSE_test')
-axs[1,2].set_xlabel('Polynomial order')
-axs[1,2].set_ylabel('Mean Squared Error')
-axs[1,2].set_title(f'Lambda value{lambdas[5]}')
-axs[1,2].legend()
+                x_train, z_train = X[train_indx, :i], z[train_indx]
+                x_test, z_test = X[test_indx, :i], z[test_indx]
+                lasso.fit(x_train, z_train)
 
-axs[1,1].plot(degs, MSE_train[4], 'b', label='MSE_train') 
-axs[1,1].plot(degs, MSE_test[4], 'r', label='MSE_test')
-axs[1,1].set_xlabel('Polynomial order')
-axs[1,1].set_ylabel('Mean Squared Error')
-axs[1,1].set_title(f'Lambda value{lambdas[4]}')
-axs[1,1].legend()
 
-axs[1,0].plot(degs, MSE_train[3], 'b', label='MSE_train') 
-axs[1,0].plot(degs, MSE_test[3], 'r', label='MSE_test')
-axs[1,0].set_xlabel('Polynomial order')
-axs[1,0].set_ylabel('Mean Squared Error')
-axs[1,0].set_title(f'Lambda value{lambdas[3]}')
-axs[1,0].legend()
+                training_error += MSE(z_train, lasso.predict(x_train))
+                test_error += MSE(z_test, lasso.predict(x_test))
 
-axs[0,2].plot(degs, MSE_train[2], 'b', label='MSE_train') 
-axs[0,2].plot(degs, MSE_test[2], 'r', label='MSE_test')
-axs[0,2].set_xlabel('Polynomial order')
-axs[0,2].set_ylabel('Mean Squared Error')
-axs[0,2].set_title(f'Lambda value{lambdas[2]}')
-axs[0,2].legend()
+            i+= i2
+            i2 += 1
+            MSE_train_list[degree-1] = training_error/folds
+            MSE_test_list[degree-1] = test_error/folds 
+            polydegrees[degree-1] = degree
+        
+        MSE_train[f] = MSE_train_list
+        MSE_test[f] = MSE_test_list
 
-axs[0,1].plot(degs, MSE_train[1], 'b', label='MSE_train') 
-axs[0,1].plot(degs, MSE_test[1], 'r', label='MSE_test')
-axs[0,1].set_xlabel('Polynomial order')
-axs[0,1].set_ylabel('Mean Squared Error')
-axs[0,1].set_title(f'Lambda value{lambdas[1]}')
-axs[0,1].legend()
+    return MSE_train, MSE_test, polydegrees, lambdas_
 
-axs[0,0].plot(degs, MSE_train[0], 'b', label='MSE_train') 
-axs[0,0].plot(degs, MSE_test[0], 'r', label='MSE_test')
-axs[0,0].set_xlabel('Polynomial order')
-axs[0,0].set_ylabel('Mean Squared Error')
-axs[0,0].set_title(f'Lambda value{lambdas[0]}')
-axs[0,0].legend()
+#MSE_train, MSE_test, polydegrees, lambdas_ = lasso_reg_kFold(n_points=20, r_seed=79, folds=10)
+#plot_kfold_figs(MSE_train, MSE_test, polydegrees, lambdas_)
 
-#axs[1,2].plot(degs, MSE_test[5], 'b', label='MSE_test')
-axs[1,2].plot(degs, bias_[5], 'y', label='bias')
-axs[1,2].plot(degs, var_[5], 'g', label='variance')
-axs[1,2].set_xlabel('Polynomial order')
-axs[1,2].set_ylabel('Mean Squared Error')
-axs[0,1].legend()
-plt.show()
-#plot_figs(MSE_train, MSE_test, bias_, var_, degs)
-#color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
+
+MSE_train, MSE_test, bias, variance, polydegrees, lambdas_ = lasso_reg_boot(n_points=20, r_seed=79, centering=True)
+plot_bootstrap_figs(MSE_train, MSE_test, bias, variance, polydegrees, lambdas_)
+
+
