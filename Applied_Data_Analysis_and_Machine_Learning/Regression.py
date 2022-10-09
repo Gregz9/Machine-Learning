@@ -2,16 +2,16 @@
 import numpy as np 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from utils import (generate_determ_data, create_X, FrankeFunction, MSE, compute_optimal_parameters,
+from utils import (generate_determ_data, create_X, FrankeFunction, MSE, compute_optimal_parameters2,
                     compute_betas_ridge, predict) 
 from sklearn import linear_model
-
+from sklearn.utils import resample
 class Reg_model:
 
-    def __init__(self, X=None, z=None, lambas_=[], n_points=0, degree=0, reg_type='ols', resampling_type=None, scaling=False):
+    def __init__(self, X=None, z=None, lambas_=[], n_points=0, degree=0, reg_type='ols', centering=False):
         self.reg_type = reg_type
-        self.resampling_type = resampling_type
-        self.scaling = scaling
+        #self.resampling_type = resampling_type
+        self.centering = centering
         self.lambdas_ = lambas_
         self.n_points = n_points
         self.degree = degree
@@ -38,29 +38,47 @@ class Reg_model:
         """
         l = int((degree+1)*(degree+2)/2)
         
-        if self.scaling: 
+        if self.centering: 
             self.X = self.X[: , 1:]
             self.x_train, self.x_test, self.z_train, self.z_test = train_test_split(self.X[:,:l], self.z.ravel(), test_size=t_size)
 
             self.intercept = np.mean(self.z_train)
             self.x_train -= np.mean(self.x_train)
             self.x_test -= np.mean(self.x_train)
+            self.z_train_centered = self.z_train - self.intercept
         else: 
             self.x_train, self.x_test, self.z_train, self.z_test = train_test_split(self.X[:,:l], self.z.ravel(), test_size=t_size)
 
+    def bootstrap_resample(self): 
+        if self.centering: 
+            self.x_train, self.z_train_centered = resample(self.x_train, self.z_train_centered)
+        else: 
+            self.x_train, self.z_train = resample(self.x_train, self.z_train) 
 
-    def fit_data(self, X_train, y_train, lambda_=0): 
+
+    def fit_data(self, x_train, z_train, lambda_=0): 
         if self.reg_type == 'ols': 
-            self.betas = compute_optimal_parameters(X_train,y_train)
+            if self.centering: 
+                self.betas = compute_optimal_parameters2(self.x_train, self.z_train_centered)
+            else: 
+                self.betas = compute_optimal_parameters2(self.x_train, self.z_train)
         elif self.reg_type == 'ridge': 
-            self.betas = compute_betas_ridge(X_train,y_train,lambda_)
+            if self.centering: 
+                self.betas = compute_betas_ridge(self.x_train, self.z_train_centered,lambda_)
+            else: 
+                self.betas = compute_betas_ridge(self.x_train, self.z_train)
         elif self.reg_type == 'lasso': 
-            self.RegLasso = linear_model.Lasso(alpha = lambda_, fit_intercept=False)
-            self.RegLasso.fit(X_train, y_train)
+            if self.centering: 
+                self.RegLasso = linear_model.Lasso(alpha = lambda_, fit_intercept=True)
+                self.RegLasso.fit(self.x_train, self.z_train_centered)
+            else: 
+                self.RegLasso = linear_model.Lasso(alpha = lambda_, fit_intercept=True)
+                self.RegLasso.fit(self.x_train, self.z_train)
+            
     
     def predict(self): 
         if self.reg_type == 'ols' or self.reg_type == 'ridge': 
-            if self.scaling: 
+            if self.centering: 
                 return (predict(self.x_train, self.betas, self.intercept), 
                         predict(self.x_test, self.betas, self.intercept))
             else: 

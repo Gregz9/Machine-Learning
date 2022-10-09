@@ -6,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import numpy as np
 from numpy.random import normal, uniform
-from utils import create_X
+from utils import create_X, load_and_scale_terrain
 from matplotlib import cm 
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 

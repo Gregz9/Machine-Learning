@@ -188,7 +188,7 @@ def load_and_scale_terrain(filename):
         terrain = terrain[:, :terrain.shape[0]]
         
     quarter = terrain.shape[0]//4
-    terrain = terrain[quarter: 2*quarter, quarter:2*quarter]
+    terrain = terrain[quarter: quarter+300, quarter:quarter+300]
     #terrain = terrain[0:-1:slice, 0:-1:slice]
   
     print(filename, 'loaded.', terrain.shape[0],'x',terrain.shape[1])
