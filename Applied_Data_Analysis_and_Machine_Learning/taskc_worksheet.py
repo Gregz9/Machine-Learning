@@ -28,7 +28,7 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, 
     bias = np.zeros(degrees)
     variance = np.zeros(degrees)
     polydegree = np.zeros(degrees)
-    X = create_X(x,y,degrees)
+    X = create_X(x,y,degrees, centering=scaling)
     i, i2 = 3, 3
 
     for degree in range(1, degrees+1): 
@@ -36,7 +36,6 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, 
         print(f'Polynomial degree {degree}')
 
         if scaling: 
-            X = np.delete(X, 0, axis=1)
             x_train, x_test, z_train, z_test = train_test_split(X[:, :i], z.ravel(), test_size=0.2)
             x_train_mean = np.mean(x_train, axis=0) 
             z_train_mean = np.mean(z_train, axis=0)     
@@ -52,7 +51,7 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, 
             for j in range(n_boots): 
             
                 # Bootstrap resampling of datasets after split
-                x_, z_ = resample(x_train, z_train, replace=True)
+                x_, z_ = resample(x_train_centered, z_train_centered, replace=True)
                 beta_SVD = compute_optimal_parameters(x_, z_)
 
                 z_pred_train = predict(x_train_centered, beta_SVD, z_train_mean) 
@@ -63,7 +62,7 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, 
             i += i2
             i2 += 1 
             
-        if scaling == False: 
+        else: 
             x_train, x_test, z_train, z_test = train_test_split(X[:, :i], z.ravel(), test_size=0.2)
 
             pred_train_avg = np.empty((n_boots, z_train.shape[0]))

@@ -59,20 +59,22 @@ def create_simple_X(x, feat):
         X[:, i] = x**i+x*i
     return X
 
-def create_X(x, y, n):
-	if len(x.shape) > 1:
-		x = np.ravel(x)
-		y = np.ravel(y)
-
-	N = len(x)
-	l = int((n+1)*(n+2)/2)
-	X = np.zeros((N,l))
-
-	for i in range(1,n+1):
-		q = int((i)*(i+1)/2)
-		for k in range(i+1):
-			X[:,q+k] = (x**(i-k))*(y**k)
-	return X
+def create_X(x, y, n, centering=False):
+    if len(x.shape) > 1:
+        x = np.ravel(x)
+        y = np.ravel(y)
+    N = len(x)
+    l = int((n+1)*(n+2)/2)
+    X = np.zeros((N,l))
+    
+    for i in range(1,n+1):
+        q = int((i)*(i+1)/2)
+        for k in range(i+1):
+            X[:,q+k] = (x**(i-k))*(y**k)
+    if centering: 
+        return X[:,1:]
+    else:         
+        return X
 
 def compute_optimal_parameters(A, y, intercept=True): 
     # This method uses SVD to compute the optimal parameters beta for OSL.
