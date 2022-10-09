@@ -18,29 +18,23 @@ from utils import (
     compute_optimal_parameters_inv, generate_design_matrix, predict, MSE, KFold_split,
 )
 
-def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=9, include_wrong_calc=False): 
+def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
     np.random.seed(r_seed)
-    
     x,y = generate_determ_data(n_points)
     z = FrankeFunction(x,y,noise=noisy)
-    X = create_X(x,y,degrees)
+    X = create_X(x,y,degrees, centering=scaling)
     z = z.ravel()
     train_ind, test_ind = KFold_split(z=z, k=folds)
 
     MSE_train = np.empty(degrees)
     MSE_test = np.empty(degrees)
-    bias = np.zeros(degrees)
-    variance = np.zeros(degrees)
+
     polydegree = np.zeros(degrees)
 
     i, i2 = 3,3
     for degree in range(1, degrees+1): 
         pred_train_avg = []
         pred_test_avg = []
-        z_train_set = []
-        z_test_set = []
-        var_avg = []
-        bias_avg = []
         training_error = 0 
         test_error = 0
         print(f'Polynomial degree {degree}')
@@ -49,11 +43,17 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
             
             x_train, z_train = X[train_indx, :i], z[train_indx]
             x_test, z_test = X[test_indx, :i], z[test_indx]
-           
-            z_train_set.append(z_train)
-            z_test_set.append(z_test)
+            if scaling:
+                x_train_mean = np.mean(x_train, axis=0) 
+                z_train_mean = np.mean(z_train, axis=0)  
+                x_train -= x_train_mean
+                x_test -= x_train_mean
+                z_train_centered = z_train - z_train_mean
+            else: 
+                z_train_centered = z_train
+                z_train_mean = 0 
             
-            betas = compute_optimal_parameters(x_train, z_train)
+            betas = compute_optimal_parameters(x_train, z_train_centered)
             z_pred_train = predict(x_train, betas)
             z_pred_test = predict(x_test, betas)
 
@@ -89,6 +89,6 @@ def plot_OLS_boot_figs(*args):
 # Good values for the random seed variable r_seed => [2, 3, 17 
 # Size of dataset good for the analysis of bias-variance trade-off => 10
 
-MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=79, folds=10)
+MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=79, folds=10, scaling=True)
 
 plot_OLS_boot_figs(MSE_train, MSE_test, pol)
