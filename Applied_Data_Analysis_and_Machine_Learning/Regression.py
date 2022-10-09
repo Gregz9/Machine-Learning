@@ -20,7 +20,7 @@ class Reg_model:
             self.X = X 
             self.z = z
         else: 
-            x,y =generate_determ_data(n_points)
+            x,y = generate_determ_data(n_points)
             z = FrankeFunction(x, y, noise=True)
             X = create_X(x,y, self.degree)
             self.z = z

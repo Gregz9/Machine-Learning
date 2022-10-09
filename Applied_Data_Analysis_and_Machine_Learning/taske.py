@@ -100,9 +100,9 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
             i2 += 1 
             MSE_train_list[degree-1] = np.mean(np.mean((z_train-pred_train_avg)**2, axis=0, keepdims=True))#training_error/n_boots
             MSE_test_list[degree-1] = np.mean(np.mean((z_test-pred_test_avg)**2, axis=0, keepdims=True))#test_error/n_boots
-            polydegree[degree-1] = degree   
             bias[degree-1] = np.mean((z_test - np.mean(pred_test_avg, axis=0, keepdims=True))**2)
             variance[degree-1] = np.mean(np.var(pred_test_avg, axis=0, keepdims=True))  
+            polydegree[degree-1] = degree   
         
         MSE_train[k] = MSE_train_list
         MSE_test[k] = MSE_test_list
@@ -175,7 +175,7 @@ def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False
     return MSE_train, MSE_test, polydegree
 
 #MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_Kfold(folds=10, r_seed=79)
-MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_bootstrap(r_seed=79, n_points=20, n_boots=100, degrees=11) 
+MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_bootstrap(r_seed=90210, n_points=20, n_boots=100, degrees=11) 
 plot_figs(MSE_train, MSE_test, bias_, variance_, deg)
 
 # good random_seeds = [79, 227

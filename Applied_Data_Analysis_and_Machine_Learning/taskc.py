@@ -17,59 +17,6 @@ from utils import (
     FrankeFunction, generate_determ_data, create_X, create_simple_X,
     compute_optimal_parameters, compute_optimal_parameters_inv, generate_design_matrix, predict, MSE)
 
-def Hastie(): 
-    np.random.seed(2018)
-
-    datapoints = 40
-    n_boostraps = 100
-    maxdegree = 10
-
-    # Make data set.
-    x = np.linspace(-2, 2, datapoints)
-    y = np.exp(-x**2) + 1.5 * np.exp(-(x-2)**2)+  np.random.normal(0, 0.1, x.shape)
-    #X = create_simple_X(x, maxdegree)
-    
-    error = np.zeros(maxdegree)
-    error2 = np.zeros(maxdegree)
-    #bias = np.zeros(maxdegree)
-    #variance = np.zeros(maxdegree)
-    polydegree = np.zeros(maxdegree)
-    
-
-    for degree in range(maxdegree):
-        X = create_simple_X(x, degree)
-        x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-        #model = make_pipeline(PolynomialFeatures(degree=degree), LinearRegression(fit_intercept=False))
-        y_pred_test = np.empty((y_test.shape[0], n_boostraps))
-        y_pred_train =np.empty((y_train.shape[0], n_boostraps))
-
-        for i in range(n_boostraps):
-            x_, y_ = resample(x_train, y_train)
-            betas = compute_optimal_parameters(x_, y_)
-        
-            y_pred_test[:, i] = predict(x_test, betas).ravel()
-            y_pred_train[:, i] = predict(x_train, betas).ravel()
-        
-        y_test = y_test.reshape((len(y_test), 1))
-        y_train = y_train.reshape((len(y_train), 1))
-        
-        polydegree[degree] = degree
-        error[degree] = np.mean( np.mean((y_test - y_pred_test)**2, axis=1, keepdims=True) )
-        error2[degree] = np.mean( np.mean((y_train - y_pred_train)**2, axis=1, keepdims=True) )
-        #bias[degree] = np.mean( (y_test - np.mean(y_pred, axis=1, keepdims=True))**2 )
-        #variance[degree] = np.mean( np.var(y_pred, axis=1, keepdims=True) )
-        #print('Polynomial degree:', degree)
-        #print('Error:', error[degree])
-        #print('Bias^2:', bias[degree])
-        #print('Var:', variance[degree])
-        #print('{} >= {} + {} = {}'.format(error[degree], bias[degree], variance[degree], bias[degree]+variance[degree]))
-
-    plt.plot(polydegree, error, label='MSE_test')
-    plt.plot(polydegree, error2, label='MSE_train')
-    #plt.plot(polydegree, variance, label='Variance')
-    plt.legend()
-    plt.show()
-
 def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, r_seed=427): 
     np.random.seed(r_seed)
     x, y = generate_determ_data(n_points)

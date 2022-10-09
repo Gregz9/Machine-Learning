@@ -122,7 +122,7 @@ def lasso_reg_boot(n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True
     x,y = generate_determ_data(n_points)
     z =FrankeFunction(x,y, noise=noisy)
     X = create_X(x,y, degrees)
-    lambdas_ = np.logspace(-6, -3, n_lambdas)
+    lambdas_ = np.logspace(-12, -3, n_lambdas)
     
     MSE_train = np.empty((n_lambdas, degrees))
     MSE_test = np.empty((n_lambdas, degrees))

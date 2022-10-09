@@ -38,7 +38,12 @@ x_mesh, y_mesh = np.meshgrid(x,y)
 print(x.shape)
 print(y.shape)
 z = terrain/1000
-
+plt.figure()
+plt.title('Terrain over Norway 1')
+plt.imshow(terrain, cmap='gray')
+plt.xlabel('X')
+plt.ylabel('Y')
+plt.show()
 #X = create_X(x, y, z)
 
 visualize_prediction(x_mesh,y_mesh,z.reshape(N,N))

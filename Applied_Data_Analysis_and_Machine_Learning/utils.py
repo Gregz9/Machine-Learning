@@ -176,12 +176,13 @@ def KFold_split(z, k):
     return (train_indices, test_indices)
 
 
-def boot_strap(*arrays, data_points, n_samples):
+def boot_strap(data_points,*arrays):
     # Bootstrap sepcified for use in 3d-regression, takes in two arrays  
     datasets = np.array(len(arrays))
-    print(datasets)
-    indices = np.random.randint(0, data_points, data_points)
-    for i in range(len(arrays)): 
-        datasets[i] = arrays[i][indices]
-    return datasets
+    indices = np.random.choice([i for i in range(arrays[0].shape[0])], arrays[0].shape[0], replace=True)
+
+    for array in arrays: 
+        array = array[indices]
+        print(array)
+    return arrays
 
