@@ -100,6 +100,7 @@ def compute_optimal_parameters_inv(X, y):
     return beta
 
 def compute_betas_ridge(X, y, lambda_):
+    lambda_ = lambda_*np.eye((X.T@X).shape[0], (X.T@X).shape[1])
     A = np.linalg.pinv(X.T@X + lambda_)@X.T
     beta = A@y.ravel()
     return beta

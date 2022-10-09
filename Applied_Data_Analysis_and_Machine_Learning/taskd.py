@@ -31,7 +31,6 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
 
     polydegree = np.zeros(degrees)
 
-    i, i2 = 3,3
     for degree in range(1, degrees+1): 
         pred_train_avg = []
         pred_test_avg = []
@@ -41,8 +40,8 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
         
         for train_indx, test_indx in zip(train_ind, test_ind):
             
-            x_train, z_train = X[train_indx, :i], z[train_indx]
-            x_test, z_test = X[test_indx, :i], z[test_indx]
+            x_train, z_train = X[train_indx, :int((degree+1)*(degree+2)/2)], z[train_indx]
+            x_test, z_test = X[test_indx, :int((degree+1)*(degree+2)/2)], z[test_indx]
             if scaling:
                 x_train_mean = np.mean(x_train, axis=0) 
                 z_train_mean = np.mean(z_train, axis=0)  
@@ -62,9 +61,6 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
 
             training_error += MSE(z_train, z_pred_train)
             test_error += MSE(z_test, z_pred_test)
-
-        i += i2 
-        i2 += 1
 
         MSE_train[degree-1] = training_error/folds 
         MSE_test[degree-1] = test_error/folds 
