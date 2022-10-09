@@ -72,7 +72,7 @@ def visualize_prediction(x,y,z,pred_vis, order):
     
 
 
-def perform_OLS_regression(n_points=40, n=10, r_seed=79, noisy=True, scaling=True): 
+def perform_OLS_regression(n_points=20, n=10, r_seed=79, noisy=True, scaling=True): 
     np.random.seed(r_seed)
     x, y = generate_determ_data(n_points)
     z = FrankeFunction(x,y, noise=noisy)
@@ -139,8 +139,8 @@ def perform_OLS_regression(n_points=40, n=10, r_seed=79, noisy=True, scaling=Tru
     return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
 
 (betas, MSE_train, MSE_test, 
-R2_train, R2_test, preds_cn, x, y, z) = perform_OLS_regression(scaling=True, noisy=True, n=10, r_seed=79)
+R2_train, R2_test, preds_cn, x, y, z) = perform_OLS_regression(scaling=True, noisy=True, n=11, r_seed=79)
 
 #print(MSE_train)
 plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test)
-visualize_prediction(x,y,z,preds_cn[4], 4)
+visualize_prediction(x,y,z,preds_cn[4], 5)

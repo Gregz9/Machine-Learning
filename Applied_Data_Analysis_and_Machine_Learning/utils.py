@@ -9,7 +9,7 @@ from sklearn.model_selection import train_test_split
 import sklearn
 from numpy.core import _asarray
 from sklearn.metrics import mean_squared_error
-
+from imageio.v2 import imread 
 # This file contains all function necessary for running regression
 
 def generate_random_data(size, seed=None): 
@@ -174,6 +174,22 @@ def KFold_split(z, k):
         test_indices.append(test_ind)
         
     return (train_indices, test_indices)
+
+def load_and_scale_terrain(filename):
+
+    terrain = imread(filename)
+
+    if terrain.shape[0] > terrain.shape[1]:
+        terrain = terrain[:terrain.shape[1], :]
+    elif terrain.shape[0] < terrain.shape[1]:
+        terrain = terrain[:, :terrain.shape[0]]
+        
+    quarter = terrain.shape[0]//4
+    terrain = terrain[quarter: 2*quarter, quarter:2*quarter]
+    #terrain = terrain[0:-1:slice, 0:-1:slice]
+  
+    print(filename, 'loaded.', terrain.shape[0],'x',terrain.shape[1])
+    return terrain/1000, terrain.shape[0]
 
 
 def boot_strap(data_points,*arrays):

@@ -112,7 +112,7 @@ def plot_OLS_boot_figs(*args):
     plt.show() 
 
 #bias,var, MSE_train, MSE_test = OLS_boot_reg(n_points=40, degrees=11, n_boots=20, seed=9)
-bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=False)
+bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=True)
 plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
 
 # Random seeds list when using create_X

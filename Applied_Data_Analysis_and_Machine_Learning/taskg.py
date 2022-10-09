@@ -13,7 +13,7 @@ from numpy.core import _asarray
 from sklearn.metrics import mean_squared_error
 from utils import ( 
     FrankeFunction, compute_optimal_parameters2, create_X, generate_determ_data, 
-    compute_optimal_parameters, predict, R2, MSE)
+    compute_optimal_parameters, predict, R2, MSE, load_and_scale_terrain)
 
 def plot_figs(*args):
     
@@ -74,11 +74,13 @@ def visualize_prediction(x,y,z,pred_vis, order):
     
 
 
-def perform_OLS_regression(n_points=300, n=15, r_seed=79, noisy=True, scaling=True): 
+def perform_OLS_regression(n_points=300, n=10, r_seed=79, noisy=True, scaling=True): 
     np.random.seed(r_seed)
-    x, y = generate_determ_data(n_points)
-    terrain = imread('C:\\Users\gregor.kajda\OneDrive - insidemedia.net\Desktop\Project_1\Machine-Learning\Applied_Data_Analysis_and_Machine_Learning\Data\SRTM_data_Norway_2.tif')
-    z = terrain[:n_points,:n_points]
+    
+    terrain_file = ('C:\\Users\gregor.kajda\OneDrive - insidemedia.net\Desktop\Project_1\Machine-Learning\Applied_Data_Analysis_and_Machine_Learning\Data\SRTM_data_Norway_2.tif')
+    terrain,N = load_and_scale_terrain(terrain_file)
+    x, y = generate_determ_data(N)
+    z = terrain[:N,:N]
 
     MSE_train_list = []
     MSE_test_list = []
@@ -109,7 +111,7 @@ def perform_OLS_regression(n_points=300, n=15, r_seed=79, noisy=True, scaling=Tr
             intercept = np.mean(z_train_mean - x_train_mean @ beta_SVD_cn)
             
             preds_visualization_cn = predict(X, beta_SVD_cn, intercept)
-            preds_visualization_cn = preds_visualization_cn.reshape(n_points, n_points)
+            preds_visualization_cn = preds_visualization_cn.reshape(N, N)
             preds_cn.append(preds_visualization_cn)
 
             preds_train_cn = predict(X_train_centered, beta_SVD_cn, z_train_mean)
@@ -128,7 +130,7 @@ def perform_OLS_regression(n_points=300, n=15, r_seed=79, noisy=True, scaling=Tr
             betas_list.append(beta_SVD_cn)
 
             preds_visualization_cn = predict(X, beta_SVD_cn)
-            preds_visualization_cn = preds_visualization_cn.reshape(n_points, n_points)
+            preds_visualization_cn = preds_visualization_cn.reshape(N, N)
             preds_cn.append(preds_visualization_cn)
 
             preds_train_cn = predict(X_train, beta_SVD_cn)
