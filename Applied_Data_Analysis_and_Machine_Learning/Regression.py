@@ -99,6 +99,54 @@ def Ridge_reg(x, y, lambda_, z=None, n_points=20, degrees=10, r_seed=79, noisy=T
 
     return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
 
+    
+
+def Lasso_reg(x, y, lambda_, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
+    np.random.seed(r_seed)
+    
+    X = create_X(x,y,degrees, centering=scaling)
+    if z == None: 
+        z = FrankeFunction(x,y, noise=noisy)
+    MSE_train_list = np.empty(degrees)
+    MSE_test_list = np.empty(degrees)
+    R2_train_list = np.empty(degrees)
+    R2_test_list = np.empty(degrees)
+    betas_list = []
+    preds_cn = []
+
+    for degree in range(1, degrees+1): 
+        x_train, x_test, z_train, z_test = train_test_split(X[:, :int((degree+1)*(degree+2)/2)], z.ravel(), test_size=0.2)
+
+        if scaling:
+            lasso = Lasso(lambda_, fit_intercept=True, max_iter=20000, tol=1e-2)
+            x_train_mean = np.mean(x_train, axis=0) 
+            z_train_mean = np.mean(z_train, axis=0)  
+            x_train -= x_train_mean
+            x_test -= x_train_mean
+            z_train_centered = z_train - z_train_mean
+        else: 
+            lasso = Lasso(lambda_, fit_intercept=False, max_iter=20000, tol=1e-2)
+            z_train_mean = 0
+            z_train_centered = z_train            
+
+        lasso.fit(x_train, z_train_centered)
+        betas_list.append(lasso.coef_)
+        
+        
+        preds_visualization_cn = lasso.predict(X[:, :int((degree+1)*(degree+2)/2)]) + z_train_mean
+        preds_visualization_cn = preds_visualization_cn.reshape(n_points, n_points)
+        preds_cn.append(preds_visualization_cn)
+
+        preds_train_cn = lasso.predict(x_train) + z_train_mean
+        preds_test_cn = lasso.predict(x_test) + z_train_mean
+
+        MSE_train_list[degree-1] = MSE(z_train, preds_train_cn)
+        MSE_test_list[degree-1] = MSE(z_test, preds_test_cn)
+        R2_train_list[degree-1] = R2(z_train, preds_train_cn)
+        R2_test_list[degree-1] = R2(z_test, preds_test_cn)
+
+    return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
+
 
 def OLS_reg_boot(x, y,z=None, n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, r_seed=427): 
     np.random.seed(r_seed)
@@ -363,7 +411,8 @@ def Ridge_reg_boot(x, y, lambdas, z=None, n_points=20, degrees=10, n_boots=100, 
     return MSE_train, MSE_test, bias_, variance_, polydegree
 
 
-def Lasso_reg_boot(x, y, lambdas_, z=None, n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True, centering=False, r_seed=79): 
+def Lasso_reg_boot(x, y, lambdas_, z=None, n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True, 
+                    centering=False, r_seed=79, find_best=False): 
 
     np.random.seed(r_seed)
     if z==None: 
@@ -388,6 +437,8 @@ def Lasso_reg_boot(x, y, lambdas_, z=None, n_points=20, degrees=10, n_boots=100,
             if centering: 
                 #lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=1e4, tol=1e-2)
                 lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=200, tol=3e-2)
+                if find_best: 
+                    lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=1e3, tol=3e-2)
                 x_train_mean = np.mean(x_train, axis=0) 
                 z_train_mean = np.mean(z_train, axis=0)  
                 x_train -= x_train_mean
@@ -395,7 +446,9 @@ def Lasso_reg_boot(x, y, lambdas_, z=None, n_points=20, degrees=10, n_boots=100,
                 z_train_centered = z_train - z_train_mean
             else: 
                 #lasso = Lasso(lambdas_[f], fit_intercept=False, max_iter=1e4, tol=1e-2)
-                lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=200, tol=3e-2)
+                lasso = Lasso(lambdas_[f], fit_intercept=False, max_iter=200, tol=3e-2)
+                if find_best: 
+                    lasso = Lasso(lambdas_[f], fit_intercept=False, max_iter=1e3, tol=3e-2)
                 z_train_mean = 0
                 z_train_centered = z_train
 

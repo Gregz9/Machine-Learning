@@ -45,7 +45,7 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
             noisy=True, centering=True, compare=False, kfold_for_all_lam=False):
 
     x,y = generate_determ_data(n_points)
-    lambdas = np.logspace(-12,-3,n_lambdas)
+    lambdas = np.logspace(-8,-2,n_lambdas)
 
 
     MSE_train_boot, MSE_test_boot, bias_, variance_, deg = Lasso_reg_boot(x, y, lambdas_=lambdas, r_seed=r_seed, n_points=n_points,
@@ -53,6 +53,9 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
     lam_L, index_L = find_best_lambda(lambdas, MSE_test_boot)
 
     plot_figs_bootstrap_all_lambdas(MSE_train_boot, MSE_test_boot, variance_, bias_, deg, lambdas)
+
+    MSE_train_boot_best, MSE_test_boot_best, bias__best, variance__best, deg = Lasso_reg_boot(x, y, lambdas_=np.array([lam_L]), r_seed=r_seed, n_points=n_points,
+                                                                n_boots=n_boots, degrees=degrees, centering=centering, find_best=True) 
 
     folds = [5,8,10] 
     MSE_train_folds_L = np.empty((len(folds), degrees))
@@ -78,7 +81,7 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
         lam_R, index_R = find_best_lambda(lambdas, MSE_test_ridge)
 
         plot_compare_bootstrap_OLS_Ridge(MSE_test_ridge[index_R], var_ridge[index_R], bias_ridge[index_R], lam_R, MSE_test_ols, var_ols, 
-                                        bias_ols, MSE_test_boot[index_L], variance_[index_L], bias_[index_L], lam_L, deg)
+                                        bias_ols, MSE_test_boot_best[0], variance__best[0], bias__best[0], lam_L, deg)
         MSE_train_folds_R = np.empty((len(folds), degrees))
         MSE_test_folds_R = np.empty((len(folds), degrees))
 

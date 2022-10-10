@@ -16,6 +16,7 @@ def task_e(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
     MSE_train_boot, MSE_test_boot, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=r_seed, n_points=n_points,
                                                                 n_boots=n_boots, degrees=degrees, scaling=centering) 
     lam, index = find_best_lambda(lambdas, MSE_test_boot)
+    
 
     plot_figs_bootstrap_all_lambdas(MSE_train_boot, MSE_test_boot, variance_, bias_, deg, lambdas)
     
@@ -27,7 +28,6 @@ def task_e(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
         
         MSE_train, MSE_test, deg = Ridge_reg_kFold(x,y,lambdas=np.array([lam]), degrees=degrees, folds=folds[i], r_seed=r_seed, scaling=centering)
         MSE_train_folds_R[i], MSE_test_folds_R[i] = MSE_train, MSE_test
-    print(deg)
 
     plot_kFold_figs_for_L(MSE_train_folds_R, MSE_test_folds_R, deg, folds)
     if kfold_for_all_lam: 
@@ -48,6 +48,7 @@ def task_e(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
             MSE_train_folds_O[i], MSE_test_folds_O[i] = MSE_train, MSE_test
 
         plot_figs_kFold_compare_OLS(MSE_train_folds_R, MSE_test_folds_R, MSE_train_folds_O, MSE_test_folds_O, deg, folds)
+    print(lam)
 
     # good random_seeds = [79, 227
 task_e(kfold_for_all_lam=True)

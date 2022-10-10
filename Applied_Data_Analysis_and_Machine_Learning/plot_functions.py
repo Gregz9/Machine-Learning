@@ -5,28 +5,73 @@ from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import numpy as np
 from random import random
 
-def compare_prediction(x,y,z,pred_vis, order):
+
+
+def show_prediction(x,y,pred_vis, order, Reg_type):
+    fig= plt.figure()
+
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    ax.plot_surface(x, y, pred_vis, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_title(f"Polynomial fit of {order}-th order using {Reg_type}")
+    
+    plt.show()
+
+
+def compare_2_predictions(x,y,z,pred_vis, order):
     fig= plt.figure()
     ax = fig.add_subplot(1, 2, 1,projection='3d')
-    surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
     # Customization of z-axis
     ax.set_zlim(-0.10, 1.40)
     ax.zaxis.set_major_locator(LinearLocator(10))
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
     ax.set_title("Frankes's function")
-    fig.colorbar(surf, shrink=0.5, aspect=5)
     
-    # -----------------------------------------------------------------------------------""
     ax = fig.add_subplot(1, 2, 2, projection='3d')
-    surf = ax.plot_surface(x, y, pred_vis, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.plot_surface(x, y, pred_vis, cmap=cm.coolwarm, linewidth=0, antialiased=False)
     ax.set_zlim(-0.10, 1.40)
     ax.zaxis.set_major_locator(LinearLocator(10))
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
     ax.set_title(f"Polynomial fit of {order}-th order")
-    # Add a color bar which maps values to colors 
-    fig.colorbar(surf, shrink=0.5, aspect=5)
+    
     plt.show()
+
+def compare_all_predictions(x, y, z, pred_vis_ols, pred_vis_ridge, pred_vis_lasso, order):
+    fig= plt.figure()
+    ax = fig.add_subplot(2, 2, 1, projection='3d')
+    ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+
+    ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_title("Frankes's function")
+
+    ax = fig.add_subplot(2, 2, 2, projection='3d')
+    ax.plot_surface(x, y, pred_vis_ols, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_title(f"Polynomial fit of {order}-th order using OLS")
+
+    ax = fig.add_subplot(2, 2, 3, projection='3d')
+    ax.plot_surface(x, y, pred_vis_ridge, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_title(f"Polynomial fit of {order}-th order using Ridge")
+
+    ax = fig.add_subplot(2, 2, 4, projection='3d')
+    ax.plot_surface(x, y, pred_vis_lasso, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_title(f"Polynomial fit of {order}-th order using Lasso")
+    plt.show()
+
 
 def plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, beta_values):
     
@@ -61,6 +106,19 @@ def plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, beta_values):
     axs[1,0].legend()
     plt.show() 
     # ---------------------------------------------------------------------------------- #
+
+
+def compare_MSE(MSE_test_ols, MSE_test_ridge, MSE_test_lasso,degs):
+    
+    fig, axs = plt.subplots(1,1)
+
+    axs.plot(degs, MSE_test_ols, 'b', label='MSE_test OLS') 
+    axs.plot(degs, MSE_test_ridge, 'r', label='MSE_test Ridge')
+    axs.plot(degs, MSE_test_lasso, 'purple', label='MSE_test Lasso')
+    axs.set_xlabel('Polynomial order')
+    axs.set_ylabel('Mean Squared Error')
+    axs.legend()
+    plt.show()
 
 def plot_OLS_figs_task_C(MSE_train, MSE_test, var, bias, degs):
     
