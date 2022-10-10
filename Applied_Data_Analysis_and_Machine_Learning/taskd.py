@@ -26,7 +26,8 @@ def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
 
     axs[0,0].plot(degs, MSE_train[0], 'b', label='MSE_train') 
     axs[0,0].plot(degs, MSE_test[0], 'r', label='MSE_test')
-    axs[0,0].plot(degs, MSE_test_scikit[0], 'k--', label='MSE_test_scikit')
+    if len(MSE_test_SKL) > 0: 
+        axs[0,0].plot(degs, MSE_test_SKL[0], 'k--', label='MSE_test_scikit')
     axs[0,0].set_title(f'{folds[0]}-folds')
     axs[0,0].set_xlabel('Polynomial order')
     axs[0,0].set_ylabel('Mean Squared Error')
@@ -34,7 +35,8 @@ def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
     
     axs[0,1].plot(degs, MSE_train[1], 'b', label='MSE_train') 
     axs[0,1].plot(degs, MSE_test[1], 'r', label='MSE_test')
-    axs[0,1].plot(degs, MSE_test_scikit[1], 'k--', label='MSE_test_scikit')
+    if len(MSE_test_SKL) > 0: 
+        axs[0,1].plot(degs, MSE_test_SKL[1], 'k--', label='MSE_test_scikit')
     axs[0,1].set_title(f'{folds[1]}-folds')
     axs[0,1].set_xlabel('Polynomial order')
     axs[0,1].set_ylabel('Mean Squared Error')
@@ -42,7 +44,8 @@ def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
 
     axs[1,0].plot(degs, MSE_train[2], 'b', label='MSE_train') 
     axs[1,0].plot(degs, MSE_test[2], 'r', label='MSE_test')
-    axs[1,0].plot(degs, MSE_test_scikit[2], 'k--', label='MSE_test_scikit')
+    if len(MSE_test_SKL) > 0: 
+        axs[1,0].plot(degs, MSE_test_SKL[2], 'k--', label='MSE_test_scikit')
     axs[1,0].set_title(f'{folds[2]}-folds')
     axs[1,0].set_xlabel('Polynomial order')
     axs[1,0].set_ylabel('Mean Squared Error')
@@ -50,7 +53,8 @@ def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
 
     axs[1,1].plot(degs, MSE_train[3], 'b', label='MSE_train') 
     axs[1,1].plot(degs, MSE_test[3], 'r', label='MSE_test')
-    axs[1,1].plot(degs, MSE_test_scikit[3], 'k--', label='MSE_test_scikit')
+    if len(MSE_test_SKL) > 0: 
+        axs[1,1].plot(degs, MSE_test_SKL[3], 'k--', label='MSE_test_scikit')
     axs[1,1].set_title(f'{folds[3]}-folds')
     axs[1,1].set_xlabel('Polynomial order')
     axs[1,1].set_ylabel('Mean Squared Error')
@@ -155,19 +159,26 @@ def OLS_reg_kFold_scikit_learn(x,y,z=None,n_points=20, degrees=5, folds=5, scali
         polydegree[degree-1] = degree
 
     return MSE_train, MSE_test, polydegree
-if __name__ == '__main__': 
-    n_points = 20 
-    noisy = True
-    order = 10 
+
+
+def task_d(n_points=20, order=10, noisy=True, centering=True, include_comparison=True):  
+
     x,y = generate_determ_data(n_points)
     folds = [5,6,8,10]
     MSE_train_folds = np.empty((len(folds), order))
     MSE_test_folds = np.empty((len(folds), order))
-    MSE_test_scikit = np.empty((len(folds), order))
+
+    if include_comparison:
+        MSE_test_scikit = np.empty((len(folds), order))
+    else: 
+        MSE_test_scikit = []
+
     for i in range(len(folds)):
         MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=order, r_seed=79, folds=folds[i], scaling=True)
         MSE_train_folds[i], MSE_test_folds[i] = MSE_train, MSE_test
-        _, MSE_t_sci, _ = OLS_reg_kFold_scikit_learn(x,y,n_points=n_points, noisy=noisy, degrees=order, r_seed=79, folds=folds[i], scaling=True)
-        MSE_test_scikit[i] = MSE_t_sci
-    
+        if include_comparison: 
+            _, MSE_t_sci, _ = OLS_reg_kFold_scikit_learn(x,y,n_points=n_points, noisy=noisy, degrees=order, r_seed=79, folds=folds[i], scaling=True)
+            MSE_test_scikit[i] = MSE_t_sci
+        
     plot_OLS_kFold_figs(MSE_train_folds, MSE_test_folds, pol, folds, MSE_test_scikit)
+

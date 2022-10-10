@@ -87,14 +87,12 @@ def OLS_reg_boot(x, y,z=None, n_points=20, degrees=5, n_boots=10, scaling=False,
 
     return bias, variance, MSE_train_list, MSE_test_list, polydegree
 
-if __name__ == "__main__": 
+def task_c(n_points=20, noisy=True, centering=True,  degrees=11, n_boots=100, r_seed=79):
 
-    n_points = 20 
-    noisy = True
     x, y = generate_determ_data(n_points)
         
     #bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=True)
-    bias,var, MSE_train, MSE_test, pol = OLS_reg_boot(x,y,n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=True)
+    bias,var, MSE_train, MSE_test, pol = OLS_reg_boot(x,y,n_points=n_points, degrees=degrees, n_boots=n_boots, r_seed=r_seed, scaling=centering)
     plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
 
     # Random seeds list when using create_X
@@ -102,3 +100,5 @@ if __name__ == "__main__":
     # Good, but some random behavoiur of data sets = [7, 8, 15 
     # Medium random seeds = [10, 12, 1911, 16, 19, 20
     # Weak random seeds = [6, 11, 31, 18
+
+task_c()
