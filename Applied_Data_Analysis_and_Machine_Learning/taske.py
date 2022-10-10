@@ -15,7 +15,7 @@ def task_e(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
 
     MSE_train_boot, MSE_test_boot, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=r_seed, n_points=n_points,
                                                                 n_boots=n_boots, degrees=degrees, scaling=centering) 
-    lam, index = find_best_lambda(lambdas, MSE_train_boot)
+    lam, index = find_best_lambda(lambdas, MSE_test_boot)
 
     plot_figs_bootstrap_all_lambdas(MSE_train_boot, MSE_test_boot, variance_, bias_, deg, lambdas)
     

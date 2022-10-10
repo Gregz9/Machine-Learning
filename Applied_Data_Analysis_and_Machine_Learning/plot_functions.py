@@ -163,14 +163,15 @@ def plot_compare_bootstrap_OLS(MSE_test_Ridge, var_Ridge, bias_Ridge, degs, lamb
 
 
 def plot_compare_bootstrap_OLS_Ridge(MSE_test_Ridge, var_Ridge, bias_Ridge, lambda_R, MSE_test_OLS, var_OLS, 
-                                    bias_OLS, MSE_test_Lasso, bias_Lasso, var_Lasoo, Lambda_L, degs):
+                                    bias_OLS, MSE_test_Lasso, var_Lasoo, bias_Lasso, Lambda_L, degs):
      
     fig, axs = plt.subplots(1,3)
     
-    axs[0].set_title(f"Bias-variance Ridge regression with optimal lamdbda{lambda_R}")
+    axs[0].set_title(f"Bias-variance Ridge with lamdbda{lambda_R}")
     axs[0].plot(degs, MSE_test_Ridge, 'b', label='MSE_test') 
     axs[0].plot(degs, var_Ridge, 'g', label='variance')
     axs[0].plot(degs, bias_Ridge, 'y', label='bias')
+    axs[0].set_ylim(0.000, 0.030)
     axs[0].set_xlabel('Polynomial order')
     axs[0].set_ylabel('bias/variance')
     axs[0].legend()
@@ -179,14 +180,16 @@ def plot_compare_bootstrap_OLS_Ridge(MSE_test_Ridge, var_Ridge, bias_Ridge, lamb
     axs[1].plot(degs, MSE_test_OLS, 'b', label='MSE_test') 
     axs[1].plot(degs, var_OLS, 'g', label='variance')
     axs[1].plot(degs, bias_OLS, 'y', label='bias')
+    axs[1].set_ylim(0.000, 0.030)
     axs[1].set_xlabel('Polynomial order')
     axs[1].set_ylabel('bias/variance')
     axs[1].legend()
 
-    axs[2].set_title(f'Bias-variance for ordniary least squares regression')
+    axs[2].set_title(f"Bias-variance Lasso with lamdbda{Lambda_L}")
     axs[2].plot(degs, MSE_test_Lasso, 'b', label='MSE_test') 
     axs[2].plot(degs, var_Lasoo, 'g', label='variance')
     axs[2].plot(degs, bias_Lasso, 'y', label='bias')
+    axs[2].set_ylim(0.000, 0.030)
     axs[2].set_xlabel('Polynomial order')
     axs[2].set_ylabel('bias/variance')
     axs[2].legend()
@@ -214,5 +217,39 @@ def plot_figs_kFold_compare_OLS(MSE_train_ridge, MSE_test_ridge, MSE_train_OLS, 
                 axs[i,j].set_xlabel('Polynomial order')
                 axs[i,j].set_ylabel('Mean Squared Error')
                 axs[i,j].legend()
+        k += 1
+    plt.show() 
+
+def plot_figs_kFold_compare_OLS_Ridge(MSE_train_ridge, MSE_test_ridge, MSE_train_OLS, MSE_test_OLS,
+                                     MSE_train_Lasso, MSE_test_Lasoo, degs, folds):
+    fig, axs = plt.subplots(3,3)
+    fig.suptitle('MSE values for training and test data for varying degrees of kfold-splits')
+    k = 0
+    for i in range(axs.shape[0]): 
+        for j in range(axs.shape[1]):
+            if j == 0:
+                axs[i,j].set_title(f'{folds[k]}-folds for OLS regression')
+                axs[i,j].plot(degs, MSE_train_OLS[k], 'b', label='MSE_train') 
+                axs[i,j].plot(degs, MSE_test_OLS[k], 'r', label='MSE_test')
+                axs[i,j].set_xlabel('Polynomial order')
+                axs[i,j].set_ylabel('Mean Squared Error')
+                axs[i,j].legend()
+            
+            elif j == 1: 
+                axs[i,j].set_title(f'{folds[k]}-folds for Rigde regression with optimal beta')
+                axs[i,j].plot(degs, MSE_train_ridge[k], 'b', label='MSE_train') 
+                axs[i,j].plot(degs, MSE_test_ridge[k], 'r', label='MSE_test')
+                axs[i,j].set_xlabel('Polynomial order')
+                axs[i,j].set_ylabel('Mean Squared Error')
+                axs[i,j].legend()
+
+            elif j == 2: 
+                axs[i,j].set_title(f'{folds[k]}-folds for Lasso regression with optimal beta')
+                axs[i,j].plot(degs, MSE_train_Lasso[k], 'b', label='MSE_train') 
+                axs[i,j].plot(degs, MSE_test_Lasoo[k], 'r', label='MSE_test')
+                axs[i,j].set_xlabel('Polynomial order')
+                axs[i,j].set_ylabel('Mean Squared Error')
+                axs[i,j].legend()
+ 
         k += 1
     plt.show() 

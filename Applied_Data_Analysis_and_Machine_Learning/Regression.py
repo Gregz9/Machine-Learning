@@ -387,7 +387,7 @@ def Lasso_reg_boot(x, y, lambdas_, z=None, n_points=20, degrees=10, n_boots=100,
             x_train, x_test, z_train, z_test = train_test_split(X[:,:int((degree+1)*(degree+2)/2)], z.ravel(), test_size=0.2)
             if centering: 
                 #lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=1e4, tol=1e-2)
-                lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=300, tol=1e-2)
+                lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=5, tol=3e-2)
                 x_train_mean = np.mean(x_train, axis=0) 
                 z_train_mean = np.mean(z_train, axis=0)  
                 x_train -= x_train_mean
@@ -395,7 +395,7 @@ def Lasso_reg_boot(x, y, lambdas_, z=None, n_points=20, degrees=10, n_boots=100,
                 z_train_centered = z_train - z_train_mean
             else: 
                 #lasso = Lasso(lambdas_[f], fit_intercept=False, max_iter=1e4, tol=1e-2)
-                lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=300, tol=1e-2)
+                lasso = Lasso(lambdas_[f], fit_intercept=True, max_iter=5, tol=3e-2)
                 z_train_mean = 0
                 z_train_centered = z_train
 
