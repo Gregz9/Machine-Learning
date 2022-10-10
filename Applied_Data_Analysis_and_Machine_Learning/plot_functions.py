@@ -134,6 +134,19 @@ def compare_bootstrap_MSE(MSE_test_ols, MSE_test_ridge, MSE_test_lasso,degs):
     axs.legend()
     plt.show()
 
+
+def compare_bootstrap_Ridge_Lasso(MSE_test_ridge, MSE_test_lasso,degs):
+    
+    fig, axs = plt.subplots(1,1)
+    fig.suptitle('Comparison of MSE values derived through bootstrap for Ridge and Lasso')
+    axs.plot(degs, MSE_test_ridge, 'r', label='MSE_test Ridge')
+    axs.plot(degs, MSE_test_lasso, 'purple', label='MSE_test Lasso')
+    axs.set_xlabel('Polynomial order')
+    axs.set_ylabel('Mean Squared Error')
+    axs.legend()
+    plt.show()
+
+
 def plot_OLS_figs_task_C(MSE_train, MSE_test, var, bias, degs):
     
     fig, axs = plt.subplots(1,2)

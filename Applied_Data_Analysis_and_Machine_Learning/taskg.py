@@ -7,7 +7,8 @@ from Regression import (OLS_reg, OLS_reg_boot, OLS_reg_kFold, Ridge_reg, Ridge_r
                          Lasso_reg, Lasso_reg_kFold, Lasso_reg_boot)
 from plot_functions import (compare_2_predictions, plot_figs_single_run, compare_all_predictions, 
                             show_terrain, plot_figs_bootstrap_all_lambdas, plot_kFold_figs_for_L,
-                            plot_compare_bootstrap_OLS_Ridge, compare_bootstrap_MSE, plot_figs_kFold_compare_OLS_Ridge)
+                            plot_compare_bootstrap_OLS_Ridge, compare_bootstrap_MSE, plot_figs_kFold_compare_OLS_Ridge,
+                            compare_bootstrap_Ridge_Lasso)
 
 
 from plot_functions import plot_OLS_figs_task_C as plot_OLS_bootstrap
@@ -39,7 +40,7 @@ def task_g(terrain_file, n_lambdas=6, r_seed=79, n_boots=10, degrees=20,
     N=100
     n_points=N
     x, y = generate_determ_data(N)
-    ter = terrain[:100,:100]
+    ter = terrain[:N,:N]
     lambdas = np.logspace(-6,0,n_lambdas)
 
     # First performing bootstrap
@@ -110,6 +111,8 @@ def task_g(terrain_file, n_lambdas=6, r_seed=79, n_boots=10, degrees=20,
     
     compare_bootstrap_MSE(OLS_boot_MSE_test, Ridge_boot_MSE_test[index_ridge], Lasso_boot_MSE_test[index_lasso], degs)
 
+    compare_bootstrap_Ridge_Lasso(Ridge_boot_MSE_test[index_ridge], Lasso_boot_MSE_test[index_lasso], degs)
+
     plot_figs_kFold_compare_OLS_Ridge(MSE_train_folds_R, MSE_test_folds_R, MSE_train_folds_O, MSE_test_folds_O, 
                                         MSE_train_folds_L, MSE_test_folds_L, degs, folds)
    
@@ -128,7 +131,7 @@ def task_g(terrain_file, n_lambdas=6, r_seed=79, n_boots=10, degrees=20,
     show_terrain(x, y, preds_cn[19], 20, 'OLS')
 
     show_terrain(x, y, R_preds_cn[10], 11, 'Ridge')
-    show_terrain(x, y, R_preds_cn[31], 14, 'Ridge')
+    show_terrain(x, y, R_preds_cn[13], 14, 'Ridge')
     show_terrain(x, y, R_preds_cn[16], 17, 'Ridge')
     show_terrain(x, y, R_preds_cn[19], 20, 'Ridge')
 
