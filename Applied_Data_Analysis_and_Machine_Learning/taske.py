@@ -19,6 +19,8 @@ from utils import (
     FrankeFunction, generate_determ_data, create_X,
     KFold_split, predict, compute_betas_ridge, MSE,
     compute_optimal_parameters, find_best_lambda)
+from taskc import OLS_reg_boot
+from taskd import OLS_reg_kFold
 
 def plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, var, bias, degs, lambdas):
     fig, axs = plt.subplots(2,3)
@@ -35,46 +37,54 @@ def plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, var, bias, degs, lambda
             axs[i,j].set_ylabel('Mean Squared Error')
             axs[i,j].legend()
             k += 1
-
     plt.show()
 
-
-def plot_best_lambda_bv(MSE_train, MSE_test, var, bias, degs, lambda_):
-    
+def plot_compare_bootstrap_OLS(MSE_test_Ridge, var_Ridge, bias_Ridge, degs, lambda_, MSE_test_OLS, var_OLS, bias_OLS):
+     
     fig, axs = plt.subplots(1,2)
-    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
-
-    axs[0].plot(degs, MSE_train, 'b', label='MSE_train') 
-    axs[0].plot(degs, MSE_test, 'r', label='MSE_test')
-    axs[0].set_xlabel('Polynomial order')
-    axs[0].set_ylabel('Mean Squared Error')
-    axs[0].legend()
     
-    axs[1].plot(degs, MSE_test, 'b', label='MSE_test') 
-    axs[1].plot(degs, var, 'g', label='variance')
-    axs[1].plot(degs, bias, 'y', label='bias')
+    axs[0].set_title(f"Bias-variance Ridge regression with optimal lamdbda{lambda_}")
+    axs[0].plot(degs, MSE_test_Ridge, 'b', label='MSE_test') 
+    axs[0].plot(degs, var_Ridge, 'g', label='variance')
+    axs[0].plot(degs, bias_Ridge, 'y', label='bias')
+    axs[0].set_xlabel('Polynomial order')
+    axs[0].set_ylabel('bias/variance')
+    axs[0].legend()
+
+    axs[1].set_title(f'Bias-variance for ordniary least squares regression')
+    axs[1].plot(degs, MSE_test_OLS, 'b', label='MSE_test') 
+    axs[1].plot(degs, var_OLS, 'g', label='variance')
+    axs[1].plot(degs, bias_OLS, 'y', label='bias')
     axs[1].set_xlabel('Polynomial order')
     axs[1].set_ylabel('bias/variance')
     axs[1].legend()
 
     plt.show()
 
-def plot_figs_kFold(MSE_train, MSE_test, degs):
-    fig, axs = plt.subplots(1,2)
-    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
+def plot_kFold_taks_e(MSE_train, MSE_test_ridge, folds, degs):
+    pass
 
-    axs[0].plot(degs, MSE_train[5], 'b', label='MSE_train') 
-    axs[0].plot(degs, MSE_test[5], 'r', label='MSE_test')
-    axs[0].set_xlabel('Polynomial order')
-    axs[0].set_ylabel('Mean Squared Error')
-    axs[0].legend()
-
-    axs[1].plot(degs, MSE_train[0], 'b', label='MSE_train') 
-    axs[1].plot(degs, MSE_test[0], 'r', label='MSE_test')
-    axs[1].set_xlabel('Polynomial order')
-    axs[1].set_ylabel('Mean Squared Error')
-    axs[1].legend()
-
+def plot_figs_kFold_compare_OLS(MSE_train_ridge, MSE_test_ridge, MSE_train_OLS, MSE_test_OLS, degs):
+    fig, axs = plt.subplots(3,2)
+    fig.suptitle('MSE values for training and test data for varying degrees of kfold-splits')
+    k = 0
+    for i in range(axs.shape[0]): 
+        for j in range(axs.shape[1]):
+            if i == 0: 
+                axs[i,j].set_title('Kfold for Rigde regression with optimal beta')
+                axs[i,j].plot(degs, MSE_train_ridge[k], 'b', label='MSE_train') 
+                axs[i,j].plot(degs, MSE_test_ridge[k], 'r', label='MSE_test')
+                axs[i,j].set_xlabel('Polynomial order')
+                axs[i,j].set_ylabel('Mean Squared Error')
+                axs[i,j].legend()
+            elif i == 1:
+                axs[i,j].set_title('Kfold for OLS regression')
+                axs[i,j].plot(degs, MSE_train_OLS[k], 'b', label='MSE_train') 
+                axs[i,j].plot(degs, MSE_test_OLS[k], 'r', label='MSE_test')
+                axs[i,j].set_xlabel('Polynomial order')
+                axs[i,j].set_ylabel('Mean Squared Error')
+                axs[i,j].legend()
+        k += 1
     plt.show() 
 
 def Ridge_reg_boot(x, y, lambdas, z=None, n_points=20, degrees=10, n_boots=100, n_lambdas=6, scaling=False, noisy=True, r_seed=79): 
@@ -83,7 +93,6 @@ def Ridge_reg_boot(x, y, lambdas, z=None, n_points=20, degrees=10, n_boots=100, 
         z= FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
     
-
     MSE_train = np.empty((n_lambdas, degrees))
     MSE_test = np.empty((n_lambdas, degrees))
     bias_ = np.zeros((n_lambdas, degrees))
@@ -137,7 +146,7 @@ def Ridge_reg_boot(x, y, lambdas, z=None, n_points=20, degrees=10, n_boots=100, 
 
     return MSE_train, MSE_test, bias_, variance_, polydegree
 
-def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False, noisy=True, r_seed=79):
+def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, scaling=False, noisy=True, r_seed=79):
     np.random.seed(r_seed)
     if z == None: 
         z= FrankeFunction(x,y,noise=noisy)
@@ -145,8 +154,8 @@ def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, n_
     z=z.ravel()
     train_ind, test_ind = KFold_split(z=z, k=folds)
 
-    MSE_train = np.empty((n_lambdas, degrees))
-    MSE_test = np.empty((n_lambdas, degrees))
+    MSE_train = np.empty((lambdas.shape[0], degrees))
+    MSE_test = np.empty((lambdas.shape[0], degrees))
     polydegree = np.zeros(degrees)
 
     for k in range(len(lambdas)): 
@@ -183,28 +192,47 @@ def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, n_
 
             MSE_train_list[degree-1] = training_error/folds
             MSE_test_list[degree-1] = test_error/folds 
-            polydegree[degree-1] = degree
+            polydegree[degree-1] = degrees
 
         MSE_train[k] = MSE_train_list
         MSE_test[k] = MSE_test_list
 
     return MSE_train, MSE_test, polydegree
 
-if __name__ == '__main__':
-    n_points = 20
-    noisy = True 
-    n_lambdas = 6
+def task_e(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,       
+            noisy=True, centering=True, compare=False, resampling_type='bootstrap'):
+
     x,y = generate_determ_data(n_points)
     lambdas = np.logspace(-12,-3,n_lambdas)
-    #MSE_train, MSE_test, deg = Ridge_reg_kFold(x,y,lambdas=lambdas, folds=10, r_seed=79, scaling=False)
-    MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=79, n_points=20, n_boots=100, degrees=12) 
-    
+
+
+    MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=r_seed, n_points=n_points,
+                                                                n_boots=n_boots, degrees=degrees, scaling=centering) 
     lam, index = find_best_lambda(lambdas, MSE_test)
-    
+
     plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, variance_, bias_, deg, lambdas)
-    plot_best_lambda_bv(MSE_test[index], variance_[index], bias_[index], deg, lam)
+    #-----------------------------------------------------------------------------------------------------------------------------""
+    folds = [5,7,10] 
+    MSE_train_folds = np.empty((len(folds), degrees))
+    MSE_test_folds = np.empty((len(folds), degrees))
+
+    for i in range(len(folds)):
+        MSE_train, MSE_test, deg = Ridge_reg_kFold(x,y,lambdas=lam, folds=folds[i], r_seed=r_seed, scaling=centering)
+        MSE_train_folds[i], MSE_test_folds[i] = MSE_train, MSE_test
+
+    if compare:
+        _, MSE_test_ols, bias_ols, var_ols, _ = OLS_reg_boot(x,y,n_points=n_points, degrees=degrees, 
+                                                            n_boots=n_boots, noisy=noisy, r_seed=r_seed, scaling=centering) 
+        plot_compare_bootstrap_OLS(MSE_test[index], variance_[index], bias_[index], deg, lam, MSE_test_ols, var_ols, bias_ols)
+
+        MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=degrees, 
+                                                    r_seed=r_seed, folds=folds[i], scaling=centering)
+        MSE_train_folds[i], MSE_test_folds[i] = MSE_train, MSE_test
+
     
     
     #plot_figs_kFold(MSE_train, MSE_test, deg)
 
     # good random_seeds = [79, 227
+task_e(compare=True)
+#MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=degrees, r_seed=79, folds=folds[i], scaling=True)

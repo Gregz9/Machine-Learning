@@ -174,7 +174,7 @@ def task_d(n_points=20, order=10, noisy=True, centering=True, include_comparison
         MSE_test_scikit = []
 
     for i in range(len(folds)):
-        MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=order, r_seed=79, folds=folds[i], scaling=True)
+        MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=order, r_seed=79, folds=folds[i], scaling=centering)
         MSE_train_folds[i], MSE_test_folds[i] = MSE_train, MSE_test
         if include_comparison: 
             _, MSE_t_sci, _ = OLS_reg_kFold_scikit_learn(x,y,n_points=n_points, noisy=noisy, degrees=order, r_seed=79, folds=folds[i], scaling=True)

@@ -18,7 +18,7 @@ from utils import (
     FrankeFunction, generate_determ_data, create_X, create_simple_X,
     compute_optimal_parameters, compute_optimal_parameters_inv, generate_design_matrix, predict, MSE)
 
-def plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, degs):
+def plot_OLS_figs_task_C(MSE_train, MSE_test, var, bias, degs):
     
     fig, axs = plt.subplots(1,2)
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
@@ -85,15 +85,15 @@ def OLS_reg_boot(x, y,z=None, n_points=20, degrees=5, n_boots=10, scaling=False,
         bias[degree-1] = np.mean((z_test - np.mean(pred_test_avg, axis=0, keepdims=True))**2)
         variance[degree-1] = np.mean(np.var(pred_test_avg, axis=0, keepdims=True))
 
-    return bias, variance, MSE_train_list, MSE_test_list, polydegree
+    return MSE_train_list, MSE_test_list, bias, variance, polydegree
 
 def task_c(n_points=20, noisy=True, centering=True,  degrees=11, n_boots=100, r_seed=79):
 
     x, y = generate_determ_data(n_points)
         
     #bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=True)
-    bias,var, MSE_train, MSE_test, pol = OLS_reg_boot(x,y,n_points=n_points, degrees=degrees, n_boots=n_boots, r_seed=r_seed, scaling=centering)
-    plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
+    MSE_train, MSE_test, bias, var, pol = OLS_reg_boot(x,y,n_points=n_points, degrees=degrees, n_boots=n_boots, r_seed=r_seed, scaling=centering)
+    plot_OLS_figs_task_C(MSE_train, MSE_test, var, bias, pol)
 
     # Random seeds list when using create_X
     # Good random seeds = [2, 4, 5, 9, 14, 17, 79
@@ -101,4 +101,4 @@ def task_c(n_points=20, noisy=True, centering=True,  degrees=11, n_boots=100, r_
     # Medium random seeds = [10, 12, 1911, 16, 19, 20
     # Weak random seeds = [6, 11, 31, 18
 
-task_c()
+#task_c()
