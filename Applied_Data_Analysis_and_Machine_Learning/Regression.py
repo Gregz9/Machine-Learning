@@ -2,11 +2,11 @@
 import numpy as np 
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from utils import (generate_determ_data, create_X, FrankeFunction, MSE,
+from utils import (generate_determ_data, create_X, FrankeFunction, MSE, KFold_split,
                     compute_betas_ridge, predict, R2, compute_optimal_parameters2) 
 from sklearn import linear_model
 from sklearn.utils import resample
-
+from sklearn.model_selection import train_test_split, KFold
 
 
 def OLS_reg(x, y, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
@@ -105,4 +105,100 @@ def OLS_reg_boot(x, y,z=None, n_points=20, degrees=5, n_boots=10, scaling=False,
     return MSE_train_list, MSE_test_list, bias, variance, polydegree
             
 
+def OLS_reg_kFold(x,y,z=None,n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
+    np.random.seed(r_seed)
+    
+    if z == None: 
+        z = FrankeFunction(x,y,noise=noisy)
+    X = create_X(x,y,degrees, centering=scaling)
+    z = z.ravel()
 
+    MSE_train = np.empty(degrees)
+    MSE_test = np.empty(degrees)
+
+    polydegree = np.zeros(degrees)
+
+    for degree in range(1, degrees+1): 
+        pred_train_avg = []
+        pred_test_avg = []
+        training_error = 0 
+        test_error = 0
+        print(f'Polynomial degree {degree}')
+        train_ind, test_ind = KFold_split(z=z, k=folds)
+        for train_indx, test_indx in zip(train_ind, test_ind):
+            
+            x_train, z_train = X[train_indx, :int((degree+1)*(degree+2)/2)], z[train_indx]
+            x_test, z_test = X[test_indx, :int((degree+1)*(degree+2)/2)], z[test_indx]
+            if scaling:
+                x_train_mean = np.mean(x_train, axis=0) 
+                z_train_mean = np.mean(z_train, axis=0)  
+                x_train -= x_train_mean
+                x_test -= x_train_mean
+                z_train_centered = z_train - z_train_mean
+            else: 
+                z_train_centered = z_train
+                z_train_mean = 0 
+            
+            betas = compute_optimal_parameters2(x_train, z_train_centered)
+            z_pred_train = predict(x_train, betas, z_train_mean)
+            z_pred_test = predict(x_test, betas, z_train_mean)
+
+            pred_train_avg.append(z_pred_train)
+            pred_test_avg.append(z_pred_test)
+            training_error += MSE(z_train, z_pred_train)
+            test_error += MSE(z_test, z_pred_test)
+
+        MSE_train[degree-1] = training_error/folds 
+        MSE_test[degree-1] = test_error/folds 
+        polydegree[degree-1] = degree
+
+    return MSE_train, MSE_test, polydegree
+
+def OLS_reg_kFold_scikit_learn(x,y,z=None,n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
+    np.random.seed(r_seed)
+    
+    if z == None: 
+        z = FrankeFunction(x,y,noise=noisy)
+    X = create_X(x,y,degrees, centering=scaling)
+    z = z.ravel()
+
+    MSE_train = np.empty(degrees)
+    MSE_test = np.empty(degrees)
+
+    polydegree = np.zeros(degrees)
+
+    for degree in range(1, degrees+1): 
+        pred_train_avg = []
+        pred_test_avg = []
+        training_error = 0 
+        test_error = 0
+        print(f'Polynomial degree {degree}')
+        kFold = KFold(n_splits=folds)
+        for train_indx, test_indx in kFold.split(X):
+            
+            x_train, z_train = X[train_indx, :int((degree+1)*(degree+2)/2)], z[train_indx]
+            x_test, z_test = X[test_indx, :int((degree+1)*(degree+2)/2)], z[test_indx]
+            if scaling:
+                x_train_mean = np.mean(x_train, axis=0) 
+                z_train_mean = np.mean(z_train, axis=0)  
+                x_train -= x_train_mean
+                x_test -= x_train_mean
+                z_train_centered = z_train - z_train_mean
+            else: 
+                z_train_centered = z_train
+                z_train_mean = 0 
+            
+            betas = compute_optimal_parameters2(x_train, z_train_centered)
+            z_pred_train = predict(x_train, betas, z_train_mean)
+            z_pred_test = predict(x_test, betas, z_train_mean)
+
+            pred_train_avg.append(z_pred_train)
+            pred_test_avg.append(z_pred_test)
+            training_error += MSE(z_train, z_pred_train)
+            test_error += MSE(z_test, z_pred_test)
+
+        MSE_train[degree-1] = training_error/folds 
+        MSE_test[degree-1] = test_error/folds 
+        polydegree[degree-1] = degree
+
+    return MSE_train, MSE_test, polydegree

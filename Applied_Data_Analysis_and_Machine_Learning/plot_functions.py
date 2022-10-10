@@ -61,3 +61,46 @@ def plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, beta_values):
     axs[1,0].legend()
     plt.show() 
     # ---------------------------------------------------------------------------------- #
+
+def plot_OLS_figs_task_C(MSE_train, MSE_test, var, bias, degs):
+    
+    fig, axs = plt.subplots(1,2)
+    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
+
+    axs[0].plot(degs, MSE_train, 'b', label='MSE_train') 
+    axs[0].plot(degs, MSE_test, 'r', label='MSE_test')
+    axs[0].set_xlabel('Polynomial order')
+    axs[0].set_ylabel('Mean Squared Error')
+    axs[0].legend()
+    
+    axs[1].plot(degs, MSE_test, 'b', label='MSE_test') 
+    axs[1].plot(degs, var, 'g', label='variance')
+    axs[1].plot(degs, bias, 'y', label='bias')
+    axs[1].set_xlabel('Polynomial order')
+    axs[1].set_ylabel('bias/variance')
+    axs[1].legend()
+
+    plt.show() 
+
+
+def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
+    
+    fig, axs = plt.subplots(2,2)
+    fig.suptitle('MSE values for varying values of fold-splits')
+    
+    k = 0
+    for i in range(axs.shape[0]):
+        for j in range(axs.shape[1]):
+            if k == len(folds): 
+                break
+            axs[i,j].plot(degs, MSE_train[k], 'b', label='MSE_train') 
+            axs[i,j].plot(degs, MSE_test[k], 'r', label='MSE_test')
+            if len(MSE_test_SKL) > 0: 
+                axs[i,j].plot(degs, MSE_test_SKL[k], 'k--', label='MSE_test_scikit')
+            axs[i,j].set_title(f'{folds[k]}-folds')
+            axs[i,j].set_xlabel('Polynomial order')
+            axs[i,j].set_ylabel('Mean Squared Error')
+            axs[i,j].legend()
+            k += 1 
+
+    plt.show() 
