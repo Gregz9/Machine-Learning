@@ -73,9 +73,10 @@ def compare_all_predictions(x, y, z, pred_vis_ols, pred_vis_ridge, pred_vis_lass
     plt.show()
 
 
-def plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, beta_values):
+def plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, beta_values, reg_type):
     
     fig, axs = plt.subplots(2,2)
+    fig.suptitle(f'MSE, R2-score and beta-parameter evalutation for {reg_type}')
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
     x = [i for i in range(1, len(beta_values)+1)]
     y = np.zeros((len(x)))

@@ -9,11 +9,11 @@ from sklearn.utils import resample
 from sklearn.model_selection import train_test_split, KFold
 from sklearn.linear_model import Lasso
 
-def OLS_reg(x, y, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
+def OLS_reg(x, y, z=[], n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
     np.random.seed(r_seed)
     
     X = create_X(x,y,degrees, centering=scaling)
-    if z == None: 
+    if len(z) == 0: 
         z = FrankeFunction(x,y, noise=noisy)
     MSE_train_list = np.empty(degrees)
     MSE_test_list = np.empty(degrees)
@@ -54,11 +54,11 @@ def OLS_reg(x, y, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scalin
 
     return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
 
-def Ridge_reg(x, y, lambda_, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
+def Ridge_reg(x, y, lambda_, z=[], n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
     np.random.seed(r_seed)
     
     X = create_X(x,y,degrees, centering=scaling)
-    if z == None: 
+    if len(z) == 0: 
         z = FrankeFunction(x,y, noise=noisy)
     MSE_train_list = np.empty(degrees)
     MSE_test_list = np.empty(degrees)
@@ -101,11 +101,11 @@ def Ridge_reg(x, y, lambda_, z=None, n_points=20, degrees=10, r_seed=79, noisy=T
 
     
 
-def Lasso_reg(x, y, lambda_, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
+def Lasso_reg(x, y, lambda_, z=[], n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
     np.random.seed(r_seed)
     
     X = create_X(x,y,degrees, centering=scaling)
-    if z == None: 
+    if len(z) == 0: 
         z = FrankeFunction(x,y, noise=noisy)
     MSE_train_list = np.empty(degrees)
     MSE_test_list = np.empty(degrees)
@@ -148,9 +148,9 @@ def Lasso_reg(x, y, lambda_, z=None, n_points=20, degrees=10, r_seed=79, noisy=T
     return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
 
 
-def OLS_reg_boot(x, y,z=None, n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, r_seed=427): 
+def OLS_reg_boot(x, y,z=[], n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, r_seed=427): 
     np.random.seed(r_seed)
-    if z == None: 
+    if len(z) == 0: 
         z = FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
 
@@ -198,10 +198,10 @@ def OLS_reg_boot(x, y,z=None, n_points=20, degrees=5, n_boots=10, scaling=False,
     return MSE_train_list, MSE_test_list, bias, variance, polydegree
             
 
-def OLS_reg_kFold(x,y,z=None,n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
+def OLS_reg_kFold(x, y, z=[], n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
     np.random.seed(r_seed)
     
-    if z == None: 
+    if len(z) == 0: 
         z = FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
     z = z.ravel()
@@ -247,10 +247,10 @@ def OLS_reg_kFold(x,y,z=None,n_points=20, degrees=5, folds=5, scaling=False, noi
 
     return MSE_train, MSE_test, polydegree
 
-def OLS_reg_kFold_scikit_learn(x,y,z=None,n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
+def OLS_reg_kFold_scikit_learn(x, y, z=[], n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
     np.random.seed(r_seed)
     
-    if z == None: 
+    if len(z) == 0: 
         z = FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
     z = z.ravel()
@@ -297,9 +297,9 @@ def OLS_reg_kFold_scikit_learn(x,y,z=None,n_points=20, degrees=5, folds=5, scali
     return MSE_train, MSE_test, polydegree
 
 
-def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, scaling=False, noisy=True, r_seed=79):
+def Ridge_reg_kFold(x, y, lambdas, z=[], n_points=20, degrees=10, folds=5, scaling=False, noisy=True, r_seed=79):
     np.random.seed(r_seed)
-    if z == None: 
+    if len(z) == 0: 
         z= FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
     z=z.ravel()
@@ -351,9 +351,9 @@ def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, sc
     return MSE_train, MSE_test, polydegree
 
 
-def Ridge_reg_boot(x, y, lambdas, z=None, n_points=20, degrees=10, n_boots=100, n_lambdas=6, scaling=False, noisy=True, r_seed=79): 
+def Ridge_reg_boot(x, y, lambdas, z=[], n_points=20, degrees=10, n_boots=100, n_lambdas=6, scaling=False, noisy=True, r_seed=79): 
     np.random.seed(r_seed)
-    if z == None:
+    if len(z) == 0:
         z= FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
     
@@ -411,11 +411,11 @@ def Ridge_reg_boot(x, y, lambdas, z=None, n_points=20, degrees=10, n_boots=100, 
     return MSE_train, MSE_test, bias_, variance_, polydegree
 
 
-def Lasso_reg_boot(x, y, lambdas_, z=None, n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True, 
+def Lasso_reg_boot(x, y, lambdas_, z=[], n_points=20, degrees=10, n_boots=100, n_lambdas=6, noisy=True, 
                     centering=False, r_seed=79, find_best=False): 
 
     np.random.seed(r_seed)
-    if z==None: 
+    if len(z) == 0: 
         z =FrankeFunction(x,y, noise=noisy)
     X = create_X(x,y, degrees, centering=centering)
     
@@ -476,10 +476,10 @@ def Lasso_reg_boot(x, y, lambdas_, z=None, n_points=20, degrees=10, n_boots=100,
     return MSE_train, MSE_test, bias, variance, polydegrees
 
 
-def Lasso_reg_kFold(x,y,lambdas_,z=None,n_points=20, degrees=10, folds=5, noisy=True, r_seed=79, centering=False): 
+def Lasso_reg_kFold(x, y, lambdas_, z=[], n_points=20, degrees=10, folds=5, noisy=True, r_seed=79, centering=False): 
 
     np.random.seed(r_seed)
-    if z==None: 
+    if len(z) == 0: 
         z =FrankeFunction(x,y, noise=noisy)
     X = create_X(x,y, degrees, centering=centering)
     z=z.ravel()

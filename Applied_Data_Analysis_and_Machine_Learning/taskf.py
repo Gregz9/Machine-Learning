@@ -10,36 +10,8 @@ import matplotlib.pyplot as plt
 from utils import generate_determ_data, find_best_lambda
 from plot_functions import (plot_figs_bootstrap_all_lambdas, plot_kfold_figs_for_k, plot_kFold_figs_for_L, 
                             plot_compare_bootstrap_OLS_Ridge, plot_figs_kFold_compare_OLS_Ridge, compare_all_predictions,
-                            show_prediction, compare_bootstrap_MSE)
+                            show_prediction, compare_bootstrap_MSE, plot_figs_single_run)
 from Regression import Lasso_reg_boot, Lasso_reg_kFold, OLS_reg_boot, OLS_reg_kFold, Ridge_reg_boot, Ridge_reg_kFold, OLS_reg, Ridge_reg, Lasso_reg
-
-#MSE_train, MSE_test, polydegrees, lambdas_ = lasso_reg_kFold(n_points=20, r_seed=79, folds=10)
-#plot_kfold_figs(MSE_train, MSE_test, polydegrees, lambdas_)
-
-#if __name__ == '__main__':
-    #n_points = 20 
-    #noisy = True
-    #x,y = generate_determ_data(n_points)
-    #n_lambdas = 6
-
-    # Lambda values used for bootstrap resampling
-    #bootstrap_lambdas_ = np.logspace(-6, -2, n_lambdas)
-
-    # These list of lambda variables is used in kFold cross-validation
-    #kFold_lambdas_ = np.logspace(-6, -2, n_lambdas)
-
-    #possibly acceptable results
-    #MSE_train, MSE_test, bias, variance, polydegrees, = Lasso_reg_boot(x,y,lambdas_=bootstrap_lambdas_,degrees=11, n_points=10, r_seed=79,noisy=noisy, centering=True)
-    #plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, bias, variance, polydegrees, bootstrap_lambdas_)
-
-    #MSE_train, MSE_test, bias, variance, polydegrees, = Lasso_reg_boot(x,y,lambdas_=bootstrap_lambdas_,degrees=11, n_points=20, r_seed=79, noisy=noisy, centering=True)
-    #plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, bias, variance, polydegrees, bootstrap_lambdas_)
-
-    
-    
-    #MSE_train, MSE_test, polydegrees, lambdas_ = Lasso_reg_kFold(x,y,lambdas_=kFold_lambdas_, n_points=10, r_seed=79, folds=10, centering=False, noisy=noisy)
-    #plot_kfold_figs_for_k(MSE_train, MSE_test, polydegrees, lambdas_)
-
 
 
 def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,       
@@ -118,6 +90,10 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
         (R_betas, R_MSE_train, R_MSE_test, 
         R_R2_train, R_R2_test, R_preds_cn, x, y, z) = Ridge_reg(x, y, n_points=n_points, lambda_=lam_R, scaling=centering, noisy=noisy, degrees=degrees, r_seed=r_seed)
 
+        plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, betas, 'OLS')
+        plot_figs_single_run(R_MSE_train, R_MSE_test, R_R2_train, R_R2_test, R_betas, 'Ridge')
+        plot_figs_single_run(L_MSE_train, L_MSE_test, L_R2_train, L_R2_test, L_betas, 'Lasso')
+        
         compare_all_predictions(x,y,z,preds_cn[4], R_preds_cn[4], L_preds_cn[4], 5)
         compare_all_predictions(x,y,z,preds_cn[6], R_preds_cn[6], L_preds_cn[6], 7)
         compare_all_predictions(x,y,z,preds_cn[8], R_preds_cn[8], L_preds_cn[8], 9)
@@ -137,6 +113,8 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
         show_prediction(x,y,R_preds_cn[6], 7, 'Lasso')
         show_prediction(x,y,R_preds_cn[8], 9, 'Lasso')
         show_prediction(x,y,R_preds_cn[10], 11, 'Lasso')        
+
+
 
 
     # good random_seeds = [79, 227"""
