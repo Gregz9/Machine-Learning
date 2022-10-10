@@ -18,13 +18,48 @@ from utils import (
     compute_optimal_parameters_inv, generate_design_matrix, predict, MSE, KFold_split,
 )
 
-def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
+def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds):
+    
+    fig, axs = plt.subplots(2,2)
+    fig.suptitle('MSE values for varying values of fold-splits')
+    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
+
+    axs[0,0].plot(degs, MSE_train[0], 'b', label='MSE_train') 
+    axs[0,0].plot(degs, MSE_test[0], 'r', label='MSE_test')
+    axs[0,0].set_title(f'{folds[0]}-folds')
+    axs[0,0].set_xlabel('Polynomial order')
+    axs[0,0].set_ylabel('Mean Squared Error')
+    axs[0,0].legend()
+    
+    axs[0,1].plot(degs, MSE_train[1], 'b', label='MSE_train') 
+    axs[0,1].plot(degs, MSE_test[1], 'r', label='MSE_test')
+    axs[0,1].set_title(f'{folds[1]}-folds')
+    axs[0,1].set_xlabel('Polynomial order')
+    axs[0,1].set_ylabel('Mean Squared Error')
+    axs[0,1].legend()
+
+    axs[1,0].plot(degs, MSE_train[2], 'b', label='MSE_train') 
+    axs[1,0].plot(degs, MSE_test[2], 'r', label='MSE_test')
+    axs[1,0].set_title(f'{folds[2]}-folds')
+    axs[1,0].set_xlabel('Polynomial order')
+    axs[1,0].set_ylabel('Mean Squared Error')
+    axs[1,0].legend()
+
+    axs[1,1].plot(degs, MSE_train[3], 'b', label='MSE_train') 
+    axs[1,1].plot(degs, MSE_test[3], 'r', label='MSE_test')
+    axs[1,1].set_title(f'{folds[3]}-folds')
+    axs[1,1].set_xlabel('Polynomial order')
+    axs[1,1].set_ylabel('Mean Squared Error')
+    axs[1,1].legend()
+    plt.show() 
+
+def OLS_reg_kFold(x,y,z=None,n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
     np.random.seed(r_seed)
-    x,y = generate_determ_data(n_points)
-    z = FrankeFunction(x,y,noise=noisy)
+    
+    if z == None: 
+        z = FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
     z = z.ravel()
-    train_ind, test_ind = KFold_split(z=z, k=folds)
 
     MSE_train = np.empty(degrees)
     MSE_test = np.empty(degrees)
@@ -37,7 +72,7 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
         training_error = 0 
         test_error = 0
         print(f'Polynomial degree {degree}')
-        
+        train_ind, test_ind = KFold_split(z=z, k=folds)
         for train_indx, test_indx in zip(train_ind, test_ind):
             
             x_train, z_train = X[train_indx, :int((degree+1)*(degree+2)/2)], z[train_indx]
@@ -67,23 +102,16 @@ def OLS_cross_reg(n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_
 
     return MSE_train, MSE_test, polydegree
 
-
-def plot_OLS_boot_figs(*args):
+if __name__ == '__main__': 
+    n_points = 20 
+    noisy = True
+    order = 10 
+    x,y = generate_determ_data(n_points)
+    folds = [5,6,8,10]
+    MSE_train_folds = np.empty((len(folds), order))
+    MSE_test_folds = np.empty((len(folds), order))
+    for i in range(len(folds)):
+        MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=order, r_seed=79, folds=folds[i], scaling=True)
+        MSE_train_folds[i], MSE_test_folds[i] = MSE_train, MSE_test
     
-    fig, axs = plt.subplots(2,2)
-    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
-
-    axs[0,0].plot(args[2], args[0], 'b', label='MSE_train') 
-    axs[0,0].plot(args[2], args[1], 'r', label='MSE_test')
-    axs[0,0].set_xlabel('Polynomial order')
-    axs[0,0].set_ylabel('Mean Squared Error')
-    axs[0,0].legend()
-    
-    plt.show() 
-
-# Good values for the random seed variable r_seed => [2, 3, 17 
-# Size of dataset good for the analysis of bias-variance trade-off => 10
-
-MSE_train, MSE_test, pol = OLS_cross_reg(n_points=20, degrees=10, r_seed=79, folds=10, scaling=True)
-
-plot_OLS_boot_figs(MSE_train, MSE_test, pol)
+    plot_OLS_kFold_figs(MSE_train_folds, MSE_test_folds, pol, folds)

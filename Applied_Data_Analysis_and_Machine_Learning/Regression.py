@@ -25,10 +25,6 @@ class Reg_model:
             X = create_X(x,y, self.degree)
             self.z = z
             self.X = X
-        
-    def cost_(self, test_data, pred_data): 
-        return MSE(test_data, pred_data)
-
 
     def preprocess_data(self, degree=5, t_size=0.2): 
         """
@@ -39,7 +35,7 @@ class Reg_model:
         l = int((degree+1)*(degree+2)/2)
         
         if self.centering: 
-            self.X = self.X[: , 1:]
+            #self.X = self.X[: , 1:]
             self.x_train, self.x_test, self.z_train, self.z_test = train_test_split(self.X[:,:l], self.z.ravel(), test_size=t_size)
 
             self.intercept = np.mean(self.z_train)
@@ -56,7 +52,7 @@ class Reg_model:
             self.x_train, self.z_train = resample(self.x_train, self.z_train) 
 
 
-    def fit_data(self, x_train, z_train, lambda_=0): 
+    def fit_data(self, x_train=[], z_train=[], lambda_=0): 
         if self.reg_type == 'ols': 
             if self.centering: 
                 self.betas = compute_optimal_parameters2(self.x_train, self.z_train_centered)
@@ -90,6 +86,10 @@ class Reg_model:
                         self.RegLasso.predict(self.x_test) + self.intercept)
             else: 
                 return self.RegLasso.predict(self.x_train), self.RegLasso.predict(self.x_test)
+
+    def cost_(self, test_data, pred_data): 
+        return MSE(test_data, pred_data)
+
 
 
     def bias_var_tradeOff(self, degree, pred_train, pred_test): 

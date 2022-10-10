@@ -15,6 +15,11 @@ from sklearn.metrics import mean_squared_error
 from utils import ( 
     FrankeFunction, compute_optimal_parameters2, create_X, generate_determ_data, 
     compute_optimal_parameters, predict, R2, MSE, load_and_scale_terrain)
+from taskb import OLS_reg
+from taskc import OLS_reg_boot
+from taskd import OLS_reg_kFold
+from taske import Ridge_reg_boot, Ridge_reg_kFold
+from taskf import Lasso_reg_boot, Lasso_reg_kFold
 
 def plot_figs(*args):
     
@@ -73,59 +78,12 @@ def visualize_prediction(x,y,z,pred_vis, order):
     ax.set_title(f"Polynomial fit of {order}-th order")
     plt.show()
 
+if __name__ == '__main__':
+    plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test)
+    visualize_prediction(x,y,z,preds_cn[19], 20)
 
-def perform_OLS_regression(n_points=300, degrees=10, r_seed=79, noisy=True, scaling=True): 
-    np.random.seed(r_seed)
-    
     terrain_file = ('C:\\Users\gregor.kajda\OneDrive - insidemedia.net\Desktop\Project_1\Machine-Learning\Applied_Data_Analysis_and_Machine_Learning\Data\SRTM_data_Norway_2.tif')
     terrain,N = load_and_scale_terrain(terrain_file)
     x, y = generate_determ_data(N)
     z = terrain[:N,:N]
-
-    MSE_train_list = np.empty(degrees)
-    MSE_test_list = np.empty(degrees)
-    R2_train_list = np.empty(degrees)
-    R2_test_list = np.empty(degrees)
-    betas_list = []
-    preds_cn = []
-    X = create_X(x,y,degrees, centering=scaling)
-
-    for degree in range(1, degrees+1):
-        
-        x_train, x_test, z_train, z_test = train_test_split(X[:, :int((degree+1)*(degree+2)/2)], z.ravel(), test_size=0.2)
-
-        if scaling:
-            x_train_mean = np.mean(x_train, axis=0) 
-            z_train_mean = np.mean(z_train, axis=0)  
-            x_train -= x_train_mean
-            x_test -= x_train_mean
-            z_train_centered = z_train - z_train_mean
-        else: 
-            z_train_mean = 0
-            z_train_centered = z_train            
-
-        beta_SVD_cn = compute_optimal_parameters2(x_train, z_train_centered)
-        betas_list.append(beta_SVD_cn)
-        # Shifted intercept for use when data is not centered
-        #intercept = np.mean(z_train_mean - x_train_mean @ beta_SVD_cn)
-        
-        preds_visualization_cn = predict(X[:, :int((degree+1)*(degree+2)/2)], beta_SVD_cn, z_train_mean)
-        preds_visualization_cn = preds_visualization_cn.reshape(n_points, n_points)
-        preds_cn.append(preds_visualization_cn)
-
-        preds_train_cn = predict(x_train, beta_SVD_cn, z_train_mean)
-        preds_test_cn = predict(x_test, beta_SVD_cn, z_train_mean)
-
-        MSE_train_list[degree-1] = MSE(z_train, preds_train_cn)
-        MSE_test_list[degree-1] = MSE(z_test, preds_test_cn)
-        R2_train_list[degree-1] = R2(z_train, preds_train_cn)
-        R2_test_list[degree-1] = R2(z_test, preds_test_cn)
-
-    return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
-
-(betas, MSE_train, MSE_test, 
-R2_train, R2_test, preds_cn, x, y, z) = perform_OLS_regression(scaling=True, degrees=20, r_seed=79)
-
-#print(MSE_train)
-plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test)
-visualize_prediction(x,y,z,preds_cn[19], 20)
+    OLS_reg(x,y,z=z)

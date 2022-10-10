@@ -33,7 +33,7 @@ def FrankeFunction(x, y, noise=False):
     term4 = -0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
     stoch_noise = np.zeros((len(x),len(x)))
     if noise: 
-        stoch_noise = np.random.normal(0, 0.1, len(x)**2)
+        stoch_noise = np.random.normal(0, 0.05, len(x)**2)
         stoch_noise = stoch_noise.reshape(len(x), len(x))
 
     return term1 + term2 + term3 + term4 + stoch_noise
@@ -201,7 +201,25 @@ def boot_strap(data_points,*arrays):
     indices = np.random.choice([i for i in range(arrays[0].shape[0])], arrays[0].shape[0], replace=True)
 
     for array in arrays: 
-        array = array[indices]
+        array = array[indices]  
         print(array)
     return arrays
 
+def find_best_lambda(lambda_list, MSE_test=[]):
+    """
+    This method chooses the best lambda value based on the mean value of 
+    the second half MSE value which correspond to the higher order 
+    polynomial features. A usual trait of lower lambda values for both Ridge 
+    and Lasso regression is that they display an increase in MSE values 
+    for both the training and test data sets.
+    """
+    
+    half = len(MSE_test)//2
+    MSE_best = 100000
+    best_lambda = None
+    for i in range(len(lambda_list)): 
+        if np.mean(MSE_test[half:]) <= MSE_best: 
+            best_lambda = lambda_list[i]
+            MSE_best = np.mean(MSE_test[half:])
+
+    return best_lambda, MSE_best

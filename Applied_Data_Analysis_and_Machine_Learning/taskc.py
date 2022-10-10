@@ -1,4 +1,5 @@
 from ensurepip import bootstrap
+from statistics import variance
 import matplotlib.pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm 
@@ -17,38 +18,38 @@ from utils import (
     FrankeFunction, generate_determ_data, create_X, create_simple_X,
     compute_optimal_parameters, compute_optimal_parameters_inv, generate_design_matrix, predict, MSE)
 
-def plot_OLS_boot_figs(*args):
+def plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, degs):
     
-    fig, axs = plt.subplots(2,2)
+    fig, axs = plt.subplots(1,2)
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
 
-    axs[0,0].plot(args[4], args[0], 'b', label='MSE_train') 
-    axs[0,0].plot(args[4], args[1], 'r', label='MSE_test')
-    axs[0,0].set_xlabel('Polynomial order')
-    axs[0,0].set_ylabel('Mean Squared Error')
-    axs[0,0].legend()
+    axs[0].plot(degs, MSE_train, 'b', label='MSE_train') 
+    axs[0].plot(degs, MSE_test, 'r', label='MSE_test')
+    axs[0].set_xlabel('Polynomial order')
+    axs[0].set_ylabel('Mean Squared Error')
+    axs[0].legend()
     
-    axs[0,1].plot(args[4], args[1], 'b', label='MSE_test') 
-    axs[0,1].plot(args[4], args[2], 'g', label='variance')
-    axs[0,1].plot(args[4], args[3], 'y', label='bias')
-    axs[0,1].set_xlabel('Polynomial order')
-    axs[0,1].set_ylabel('R2 Score')
-    axs[0,1].legend()
+    axs[1].plot(degs, MSE_test, 'b', label='MSE_test') 
+    axs[1].plot(degs, var, 'g', label='variance')
+    axs[1].plot(degs, bias, 'y', label='bias')
+    axs[1].set_xlabel('Polynomial order')
+    axs[1].set_ylabel('R2 Score')
+    axs[1].legend()
 
     plt.show() 
 
-def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, r_seed=427): 
+def OLS_reg_boot(x, y,z=None, n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, r_seed=427): 
     np.random.seed(r_seed)
-    x, y = generate_determ_data(n_points)
-    z = FrankeFunction(x,y,noise=noisy)
+    if z == None: 
+        z = FrankeFunction(x,y,noise=noisy)
+    X = create_X(x,y,degrees, centering=scaling)
 
     MSE_train_list = np.empty(degrees)
     MSE_test_list = np.empty(degrees)
-
     bias = np.zeros(degrees)
     variance = np.zeros(degrees)
     polydegree = np.zeros(degrees)
-    X = create_X(x,y,degrees, centering=scaling)
+    
     for degree in range(1, degrees+1): 
         
         print(f'Processing polynomial of {degree} degree ')
@@ -86,12 +87,18 @@ def OLS_boot_reg(n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, 
 
     return bias, variance, MSE_train_list, MSE_test_list, polydegree
 
-#bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=True)
-bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=False)
-plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
+if __name__ == "__main__": 
 
-# Random seeds list when using create_X
-# Good random seeds = [2, 4, 5, 9, 14, 17, 79
-# Good, but some random behavoiur of data sets = [7, 8, 15 
-# Medium random seeds = [10, 12, 1911, 16, 19, 20
-# Weak random seeds = [6, 11, 31, 18
+    n_points = 20 
+    noisy = True
+    x, y = generate_determ_data(n_points)
+        
+    #bias,var, MSE_train, MSE_test, pol = OLS_boot_reg(n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=True)
+    bias,var, MSE_train, MSE_test, pol = OLS_reg_boot(x,y,n_points=20, degrees=11, n_boots=100, r_seed=79, scaling=True)
+    plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, pol)
+
+    # Random seeds list when using create_X
+    # Good random seeds = [2, 4, 5, 9, 14, 17, 79
+    # Good, but some random behavoiur of data sets = [7, 8, 15 
+    # Medium random seeds = [10, 12, 1911, 16, 19, 20
+    # Weak random seeds = [6, 11, 31, 18

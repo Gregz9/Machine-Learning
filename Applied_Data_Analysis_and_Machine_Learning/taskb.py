@@ -13,34 +13,34 @@ from utils import (
     FrankeFunction, generate_random_data, create_X, generate_determ_data, 
     compute_optimal_parameters, predict, R2, MSE)
 
-def plot_figs(*args):
+def plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, beta_values):
     
     fig, axs = plt.subplots(2,2)
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
-    x = [i for i in range(1, len(args[0])+1)]
+    x = [i for i in range(1, len(beta_values)+1)]
     y = np.zeros((len(x)))
 
-    beta_matrix = np.zeros((len(args[0]), 5))
+    beta_matrix = np.zeros((len(beta_values), 5))
     for i in range(beta_matrix.shape[0]): 
-        for j in range(len(args[0][i])):
+        for j in range(len(beta_values[i])):
             if j == 5:
                 break
-            beta_matrix[i][j] = args[0][i][j]
+            beta_matrix[i][j] = beta_values[i][j]
     for k in range(5): 
-        axs[0,0].plot(x, [beta_matrix[i,k] for i in range(len(args[0]))], color_list[k], label=f'beta{k+1}')
+        axs[0,0].plot(x, [beta_matrix[i,k] for i in range(len(beta_values))], color_list[k], label=f'beta{k+1}')
     axs[0,0].plot(x, y, 'k--', label='x-axis')
     axs[0,0].set_xlabel('Polynomial order')
     axs[0,0].set_ylabel('Beta values')
     axs[0,0].legend()
 
-    axs[0,1].plot(x, args[1], 'b', label='MSE_train') 
-    axs[0,1].plot(x, args[3], 'r', label='MSE_test')
+    axs[0,1].plot(x, MSE_train, 'b', label='MSE_train') 
+    axs[0,1].plot(x, MSE_test, 'r', label='MSE_test')
     axs[0,1].set_xlabel('Polynomial order')
     axs[0,1].set_ylabel('Mean Squared Error')
     axs[0,1].legend()
 
-    axs[1,0].plot(x, args[2], 'g', label='R2_train')
-    axs[1,0].plot(x, args[4], 'y', label='R2_test')
+    axs[1,0].plot(x, R2_train, 'g', label='R2_train')
+    axs[1,0].plot(x, R2_test, 'y', label='R2_test')
     axs[1,0].set_xlabel('Polynomial order')
     axs[1,0].set_ylabel('R2 Score')
     axs[1,0].legend()
@@ -72,12 +72,12 @@ def visualize_prediction(x,y,z,pred_vis, order):
     
 
 
-def perform_OLS_regression(n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
+def OLS_reg(x, y, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
     np.random.seed(r_seed)
-    x, y = generate_determ_data(n_points)
-    z = FrankeFunction(x,y, noise=noisy)
+    
     X = create_X(x,y,degrees, centering=scaling)
-
+    if z == None: 
+        z = FrankeFunction(x,y, noise=noisy)
     MSE_train_list = np.empty(degrees)
     MSE_test_list = np.empty(degrees)
     R2_train_list = np.empty(degrees)
@@ -117,9 +117,15 @@ def perform_OLS_regression(n_points=20, degrees=10, r_seed=79, noisy=True, scali
 
     return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
 
-(betas, MSE_train, MSE_test, 
-R2_train, R2_test, preds_cn, x, y, z) = perform_OLS_regression(scaling=True, noisy=True, degrees=11, r_seed=79)
 
-#print(MSE_train)
-plot_figs(betas, MSE_train, R2_train, MSE_test, R2_test)
-visualize_prediction(x,y,z,preds_cn[4], 5)
+
+if __name__ == '__main__': 
+    n_points = 20 
+    noisy = True
+    x, y = generate_determ_data(n_points)
+    (betas, MSE_train, MSE_test, 
+    R2_train, R2_test, preds_cn, x, y, z) = OLS_reg( x, y, scaling=False, noisy=noisy, degrees=11, r_seed=79)
+
+    #print(MSE_train)
+    plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, betas)
+    visualize_prediction(x,y,z,preds_cn[4], 5)

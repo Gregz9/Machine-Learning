@@ -1,5 +1,6 @@
 from ensurepip import bootstrap
 from statistics import variance
+
 import matplotlib.pyplot as plt 
 from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm 
@@ -17,7 +18,7 @@ import time
 from utils import ( 
     FrankeFunction, generate_determ_data, create_X,
     KFold_split, predict, compute_betas_ridge, MSE,
-    compute_optimal_parameters)
+    compute_optimal_parameters, find_best_lambda)
 
 def plot_figs(*args):
     fig, axs = plt.subplots(2,2)
@@ -66,14 +67,14 @@ def plot_figs_kFold(MSE_train, MSE_test, degs):
     axs[1].set_ylabel('Mean Squared Error')
     axs[1].legend()
 
-    plt.show()
+    plt.show() 
 
-def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scaling=False, noisy=True, r_seed=7): 
+def Ridge_reg_boot(x, y, lambdas, z=None, n_points=20, degrees=10, n_boots=100, n_lambdas=6, scaling=False, noisy=True, r_seed=79): 
     np.random.seed(r_seed)
-    x,y = generate_determ_data(n_points)
-    z= FrankeFunction(x,y,noise=noisy)
+    if z == None:
+        z= FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
-    lambdas = np.logspace(-12,-3,n_lambdas)
+    
 
     MSE_train = np.empty((n_lambdas, degrees))
     MSE_test = np.empty((n_lambdas, degrees))
@@ -128,12 +129,11 @@ def Ridge_reg_bootstrap(n_points=20, degrees=10, n_boots=100, n_lambdas=6, scali
 
     return MSE_train, MSE_test, bias_, variance_, polydegree
 
-def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False, noisy=True, r_seed=79):
+def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False, noisy=True, r_seed=79):
     np.random.seed(r_seed)
-    x,y = generate_determ_data(n_points)
-    z= FrankeFunction(x,y,noise=noisy)
+    if z == None: 
+        z= FrankeFunction(x,y,noise=noisy)
     X = create_X(x,y,degrees, centering=scaling)
-    lambdas = np.logspace(-12,-3,n_lambdas)
     z=z.ravel()
     train_ind, test_ind = KFold_split(z=z, k=folds)
 
@@ -182,8 +182,16 @@ def Ridge_reg_Kfold(n_points=20, degrees=10, folds=5, n_lambdas=6, scaling=False
 
     return MSE_train, MSE_test, polydegree
 
-MSE_train, MSE_test, deg = Ridge_reg_Kfold(folds=10, r_seed=79, scaling=True)
-#MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_bootstrap(r_seed=79, n_points=20, n_boots=100, degrees=11) 
-plot_figs_kFold(MSE_train, MSE_test, deg)
+if __name__ == '__main__':
+    n_points = 20
+    noisy = True 
+    n_lambdas = 6
+    x,y = generate_determ_data(n_points)
+    lambdas = np.logspace(-12,-3,n_lambdas)
+    #MSE_train, MSE_test, deg = Ridge_reg_kFold(x,y,lambdas=lambdas, folds=10, r_seed=79, scaling=False)
+    MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=79, n_points=20, n_boots=100, degrees=11) 
+    lam, mse_ = find_best_lambda(lambdas, MSE_test)
+    print(lam)
+    #plot_figs_kFold(MSE_train, MSE_test, deg)
 
-# good random_seeds = [79, 227
+    # good random_seeds = [79, 227
