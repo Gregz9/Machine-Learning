@@ -82,8 +82,25 @@ def plot_OLS_figs_task_C(MSE_train, MSE_test, var, bias, degs):
 
     plt.show() 
 
+def plot_kfold_figs_for_k(MSE_train, MSE_test, polydegrees, lambdas_ ,fold=10):
+    fig, axs = plt.subplots(2,3)
+    fig.suptitle(f'MSE of lasso regression kfold witj = {fold} and varying values of lambda parameter')
+    k = 0
+    for i in range(axs.shape[0]):
+        for j in range(axs.shape[1]):
 
-def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
+            axs[i,j].plot(polydegrees, MSE_train[k], 'g', label='MSE_train')
+            axs[i,j].plot(polydegrees, MSE_test[k], 'b', label='MSE_test')
+            axs[i,j].set_xlabel('Polynomial_order')
+            axs[i,j].set_ylabel('MSE')
+            axs[i,j].set_title(f'Lambda: {lambdas_[k]}')
+            axs[i,j].legend()
+            k += 1
+
+    plt.show()
+
+
+def plot_kFold_figs_for_L(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
     
     fig, axs = plt.subplots(2,2)
     fig.suptitle('MSE values for varying values of fold-splits')
