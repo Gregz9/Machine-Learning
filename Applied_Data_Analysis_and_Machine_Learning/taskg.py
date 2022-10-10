@@ -37,11 +37,12 @@ def task_g(terrain_file, n_lambdas=6, r_seed=79, n_boots=10, degrees=20,
     
     #Starting off by loading a part of the terrain from the tif file
     terrain,N = load_and_scale_terrain(terrain_file)
-    N=100
-    n_points=N
+    N1=50
+    n_points=N1
     x, y = generate_determ_data(N)
-    ter = terrain[:N,:N]
-    lambdas = np.logspace(-6,0,n_lambdas)
+    ter = terrain[:N1,:N1]
+    ter2 = terrain[:N, :N]
+    lambdas = np.logspace(-10,0,n_lambdas)
 
     # First performing bootstrap
     (OLS_boot_MSE_train, OLS_boot_MSE_test, 
