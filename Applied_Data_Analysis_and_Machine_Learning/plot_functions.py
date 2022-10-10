@@ -161,6 +161,39 @@ def plot_compare_bootstrap_OLS(MSE_test_Ridge, var_Ridge, bias_Ridge, degs, lamb
 
     plt.show()
 
+
+def plot_compare_bootstrap_OLS_Ridge(MSE_test_Ridge, var_Ridge, bias_Ridge, lambda_R, MSE_test_OLS, var_OLS, 
+                                    bias_OLS, MSE_test_Lasso, bias_Lasso, var_Lasoo, Lambda_L, degs):
+     
+    fig, axs = plt.subplots(1,3)
+    
+    axs[0].set_title(f"Bias-variance Ridge regression with optimal lamdbda{lambda_R}")
+    axs[0].plot(degs, MSE_test_Ridge, 'b', label='MSE_test') 
+    axs[0].plot(degs, var_Ridge, 'g', label='variance')
+    axs[0].plot(degs, bias_Ridge, 'y', label='bias')
+    axs[0].set_xlabel('Polynomial order')
+    axs[0].set_ylabel('bias/variance')
+    axs[0].legend()
+
+    axs[1].set_title(f'Bias-variance for ordniary least squares regression')
+    axs[1].plot(degs, MSE_test_OLS, 'b', label='MSE_test') 
+    axs[1].plot(degs, var_OLS, 'g', label='variance')
+    axs[1].plot(degs, bias_OLS, 'y', label='bias')
+    axs[1].set_xlabel('Polynomial order')
+    axs[1].set_ylabel('bias/variance')
+    axs[1].legend()
+
+    axs[2].set_title(f'Bias-variance for ordniary least squares regression')
+    axs[2].plot(degs, MSE_test_Lasso, 'b', label='MSE_test') 
+    axs[2].plot(degs, var_Lasoo, 'g', label='variance')
+    axs[2].plot(degs, bias_Lasso, 'y', label='bias')
+    axs[2].set_xlabel('Polynomial order')
+    axs[2].set_ylabel('bias/variance')
+    axs[2].legend()
+
+    plt.show()
+
+
 def plot_figs_kFold_compare_OLS(MSE_train_ridge, MSE_test_ridge, MSE_train_OLS, MSE_test_OLS, degs, folds):
     fig, axs = plt.subplots(3,2)
     fig.suptitle('MSE values for training and test data for varying degrees of kfold-splits')
