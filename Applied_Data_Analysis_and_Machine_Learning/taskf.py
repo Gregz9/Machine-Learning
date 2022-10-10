@@ -9,8 +9,9 @@ from sklearn.linear_model import Lasso
 import matplotlib.pyplot as plt
 from utils import generate_determ_data, find_best_lambda
 from plot_functions import (plot_figs_bootstrap_all_lambdas, plot_kfold_figs_for_k, plot_kFold_figs_for_L, 
-                            plot_compare_bootstrap_OLS_Ridge, plot_figs_kFold_compare_OLS_Ridge)
-from Regression import Lasso_reg_boot, Lasso_reg_kFold, OLS_reg_boot, OLS_reg_kFold, Ridge_reg_boot, Ridge_reg_kFold
+                            plot_compare_bootstrap_OLS_Ridge, plot_figs_kFold_compare_OLS_Ridge, compare_all_predictions,
+                            show_prediction, compare_bootstrap_MSE)
+from Regression import Lasso_reg_boot, Lasso_reg_kFold, OLS_reg_boot, OLS_reg_kFold, Ridge_reg_boot, Ridge_reg_kFold, OLS_reg, Ridge_reg, Lasso_reg
 
 #MSE_train, MSE_test, polydegrees, lambdas_ = lasso_reg_kFold(n_points=20, r_seed=79, folds=10)
 #plot_kfold_figs(MSE_train, MSE_test, polydegrees, lambdas_)
@@ -75,6 +76,7 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
 
         _, MSE_test_ols, bias_ols, var_ols, _ = OLS_reg_boot(x,y,n_points=n_points, degrees=degrees, 
                                                             n_boots=n_boots, noisy=noisy, r_seed=r_seed, scaling=centering) 
+
         _, MSE_test_ridge, bias_ridge, var_ridge, _ = Ridge_reg_boot(x,y, lambdas=lambdas, n_points=n_points, degrees=degrees, n_boots=n_boots,
                                                                     noisy=noisy, r_seed=r_seed, scaling=centering)
 
@@ -82,6 +84,7 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
 
         plot_compare_bootstrap_OLS_Ridge(MSE_test_ridge[index_R], var_ridge[index_R], bias_ridge[index_R], lam_R, MSE_test_ols, var_ols, 
                                         bias_ols, MSE_test_boot_best[0], variance__best[0], bias__best[0], lam_L, deg)
+
         MSE_train_folds_R = np.empty((len(folds), degrees))
         MSE_test_folds_R = np.empty((len(folds), degrees))
 
@@ -94,12 +97,45 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
 
             MSE_train_R, MSE_test_R, _ = Ridge_reg_kFold(x,y, lambdas=np.array([lam_R]), n_points=n_points, noisy=noisy, degrees=degrees, 
                                                         r_seed=r_seed, folds=folds[i], scaling=centering)
+                                                        
             MSE_train_folds_O[i], MSE_test_folds_O[i] = MSE_train_O, MSE_test_O
             MSE_train_folds_R[i], MSE_test_folds_R[i] = MSE_train_R, MSE_test_R
 
 
         plot_figs_kFold_compare_OLS_Ridge(MSE_train_folds_R, MSE_test_folds_R, MSE_train_folds_O, 
                                             MSE_test_folds_O, MSE_train_folds_L, MSE_test_folds_L, deg, folds)
+
+      
+        (betas, MSE_train, MSE_test, 
+        R2_train, R2_test, preds_cn, x, y, z) = OLS_reg(x, y, n_points=n_points, scaling=centering, noisy=noisy, degrees=degrees, r_seed=r_seed)
+
+
+        (L_betas, L_MSE_train, L_MSE_test, 
+        L_R2_train, L_R2_test, L_preds_cn, x, y, z) = Lasso_reg(x, y, n_points=n_points, lambda_=lam_L, scaling=centering, noisy=noisy, degrees=degrees, r_seed=r_seed)
+
+        (R_betas, R_MSE_train, R_MSE_test, 
+        R_R2_train, R_R2_test, R_preds_cn, x, y, z) = Ridge_reg(x, y, n_points=n_points, lambda_=lam_R, scaling=centering, noisy=noisy, degrees=degrees, r_seed=r_seed)
+
+        compare_all_predictions(x,y,z,preds_cn[4], R_preds_cn[4], L_preds_cn[4], 5)
+        compare_all_predictions(x,y,z,preds_cn[6], R_preds_cn[6], L_preds_cn[6], 7)
+        compare_all_predictions(x,y,z,preds_cn[8], R_preds_cn[8], L_preds_cn[8], 9)
+        compare_all_predictions(x,y,z,preds_cn[10], R_preds_cn[10], L_preds_cn[10], 11)
+
+        show_prediction(x,y,preds_cn[4], 5, 'OLS')
+        show_prediction(x,y,preds_cn[6], 7, 'OLS')
+        show_prediction(x,y,preds_cn[8], 9, 'OLS')
+        show_prediction(x,y,preds_cn[10], 11, 'OLS')
+
+        show_prediction(x,y,R_preds_cn[4], 5, 'Ridge')
+        show_prediction(x,y,R_preds_cn[6], 7, 'Ridge')
+        show_prediction(x,y,R_preds_cn[8], 9, 'Ridge')
+        show_prediction(x,y,R_preds_cn[10], 11, 'Ridge')
+
+        show_prediction(x,y,R_preds_cn[4], 5, 'Lasso')
+        show_prediction(x,y,R_preds_cn[6], 7, 'Lasso')
+        show_prediction(x,y,R_preds_cn[8], 9, 'Lasso')
+        show_prediction(x,y,R_preds_cn[10], 11, 'Lasso')        
+
 
     # good random_seeds = [79, 227"""
 

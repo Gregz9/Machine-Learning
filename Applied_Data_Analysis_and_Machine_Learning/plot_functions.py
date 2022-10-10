@@ -108,7 +108,7 @@ def plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, beta_values):
     # ---------------------------------------------------------------------------------- #
 
 
-def compare_MSE(MSE_test_ols, MSE_test_ridge, MSE_test_lasso,degs):
+def compare_bootstrap_MSE(MSE_test_ols, MSE_test_ridge, MSE_test_lasso,degs):
     
     fig, axs = plt.subplots(1,1)
 
