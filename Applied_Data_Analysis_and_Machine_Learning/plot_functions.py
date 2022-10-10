@@ -104,3 +104,65 @@ def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
             k += 1 
 
     plt.show() 
+
+def plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, var, bias, degs, lambdas):
+    fig, axs = plt.subplots(2,3)
+    fig.suptitle("Plots for analysis of bias-varaince trade-off for ascending values of lambda")
+    k = 0
+    for i in range(axs.shape[0]): 
+        for j in range(axs.shape[1]):
+            axs[i,j].set_title(f'Lambda value {lambdas[k]}')
+            axs[i,j].plot(degs, MSE_train[k], 'b', label='MSE_train') 
+            axs[i,j].plot(degs, MSE_test[k], 'r', label='MSE_test')
+            axs[i,j].plot(degs, var[k], 'g', label='variance')
+            axs[i,j].plot(degs, bias[k], 'y', label='bias')
+            axs[i,j].set_xlabel('Polynomial order')
+            axs[i,j].set_ylabel('Mean Squared Error')
+            axs[i,j].legend()
+            k += 1
+    plt.show()
+
+def plot_compare_bootstrap_OLS(MSE_test_Ridge, var_Ridge, bias_Ridge, degs, lambda_, MSE_test_OLS, var_OLS, bias_OLS):
+     
+    fig, axs = plt.subplots(1,2)
+    
+    axs[0].set_title(f"Bias-variance Ridge regression with optimal lamdbda{lambda_}")
+    axs[0].plot(degs, MSE_test_Ridge, 'b', label='MSE_test') 
+    axs[0].plot(degs, var_Ridge, 'g', label='variance')
+    axs[0].plot(degs, bias_Ridge, 'y', label='bias')
+    axs[0].set_xlabel('Polynomial order')
+    axs[0].set_ylabel('bias/variance')
+    axs[0].legend()
+
+    axs[1].set_title(f'Bias-variance for ordniary least squares regression')
+    axs[1].plot(degs, MSE_test_OLS, 'b', label='MSE_test') 
+    axs[1].plot(degs, var_OLS, 'g', label='variance')
+    axs[1].plot(degs, bias_OLS, 'y', label='bias')
+    axs[1].set_xlabel('Polynomial order')
+    axs[1].set_ylabel('bias/variance')
+    axs[1].legend()
+
+    plt.show()
+
+def plot_figs_kFold_compare_OLS(MSE_train_ridge, MSE_test_ridge, MSE_train_OLS, MSE_test_OLS, degs, folds):
+    fig, axs = plt.subplots(3,2)
+    fig.suptitle('MSE values for training and test data for varying degrees of kfold-splits')
+    k = 0
+    for i in range(axs.shape[0]): 
+        for j in range(axs.shape[1]):
+            if j == 0: 
+                axs[i,j].set_title(f'{folds[k]}-folds for Rigde regression with optimal beta')
+                axs[i,j].plot(degs, MSE_train_ridge[k], 'b', label='MSE_train') 
+                axs[i,j].plot(degs, MSE_test_ridge[k], 'r', label='MSE_test')
+                axs[i,j].set_xlabel('Polynomial order')
+                axs[i,j].set_ylabel('Mean Squared Error')
+                axs[i,j].legend()
+            elif j == 1:
+                axs[i,j].set_title(f'{folds[k]}-folds for OLS regression')
+                axs[i,j].plot(degs, MSE_train_OLS[k], 'b', label='MSE_train') 
+                axs[i,j].plot(degs, MSE_test_OLS[k], 'r', label='MSE_test')
+                axs[i,j].set_xlabel('Polynomial order')
+                axs[i,j].set_ylabel('Mean Squared Error')
+                axs[i,j].legend()
+        k += 1
+    plt.show() 
