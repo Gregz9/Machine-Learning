@@ -54,6 +54,51 @@ def OLS_reg(x, y, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scalin
 
     return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
 
+def Ridge_reg(x, y, lambda_, z=None, n_points=20, degrees=10, r_seed=79, noisy=True, scaling=True): 
+    np.random.seed(r_seed)
+    
+    X = create_X(x,y,degrees, centering=scaling)
+    if z == None: 
+        z = FrankeFunction(x,y, noise=noisy)
+    MSE_train_list = np.empty(degrees)
+    MSE_test_list = np.empty(degrees)
+    R2_train_list = np.empty(degrees)
+    R2_test_list = np.empty(degrees)
+    betas_list = []
+    preds_cn = []
+
+    for degree in range(1, degrees+1): 
+        x_train, x_test, z_train, z_test = train_test_split(X[:, :int((degree+1)*(degree+2)/2)], z.ravel(), test_size=0.2)
+
+        if scaling:
+            x_train_mean = np.mean(x_train, axis=0) 
+            z_train_mean = np.mean(z_train, axis=0)  
+            x_train -= x_train_mean
+            x_test -= x_train_mean
+            z_train_centered = z_train - z_train_mean
+        else: 
+            z_train_mean = 0
+            z_train_centered = z_train            
+
+        beta_SVD_cn = compute_betas_ridge(x_train, z_train_centered)
+        betas_list.append(beta_SVD_cn)
+        # Shifted intercept for use when data is not centered
+        #intercept = np.mean(z_train_mean - x_train_mean @ beta_SVD_cn)
+        
+        preds_visualization_cn = predict(X[:, :int((degree+1)*(degree+2)/2)], beta_SVD_cn, z_train_mean)
+        preds_visualization_cn = preds_visualization_cn.reshape(n_points, n_points)
+        preds_cn.append(preds_visualization_cn)
+
+        preds_train_cn = predict(x_train, beta_SVD_cn, z_train_mean)
+        preds_test_cn = predict(x_test, beta_SVD_cn, z_train_mean)
+
+        MSE_train_list[degree-1] = MSE(z_train, preds_train_cn)
+        MSE_test_list[degree-1] = MSE(z_test, preds_test_cn)
+        R2_train_list[degree-1] = R2(z_train, preds_train_cn)
+        R2_test_list[degree-1] = R2(z_test, preds_test_cn)
+
+    return betas_list, MSE_train_list, MSE_test_list, R2_train_list, R2_test_list,  preds_cn, x, y, z
+
 
 def OLS_reg_boot(x, y,z=None, n_points=20, degrees=5, n_boots=10, scaling=False, noisy=True, r_seed=427): 
     np.random.seed(r_seed)
@@ -430,4 +475,4 @@ def Lasso_reg_kFold(x,y,lambdas_,z=None,n_points=20, degrees=10, folds=5, noisy=
         MSE_train[f] = MSE_train_list
         MSE_test[f] = MSE_test_list
 
-    return MSE_train, MSE_test, polydegrees, lambdas_
+    return MSE_train, MSE_test, polydegrees
