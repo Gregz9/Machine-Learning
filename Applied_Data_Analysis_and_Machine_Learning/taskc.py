@@ -33,7 +33,7 @@ def plot_OLS_boot_figs(MSE_train, MSE_test, var, bias, degs):
     axs[1].plot(degs, var, 'g', label='variance')
     axs[1].plot(degs, bias, 'y', label='bias')
     axs[1].set_xlabel('Polynomial order')
-    axs[1].set_ylabel('R2 Score')
+    axs[1].set_ylabel('bias/variance')
     axs[1].legend()
 
     plt.show() 

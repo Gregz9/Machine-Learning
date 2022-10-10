@@ -26,14 +26,14 @@ def generate_determ_data(size):
     x, y = np.meshgrid(x,y)
     return x,y
 
-def FrankeFunction(x, y, noise=False):
+def FrankeFunction(x, y, noise=False, noise_range = [0, 0.05]):
     term1 = 0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
     term2 = 0.75*np.exp(-((9*x+1)**2)/49.0 - 0.1*(9*y+1))
     term3 = 0.5*np.exp(-(9*x-7)**2/4.0 - 0.25*((9*y-3)**2))
     term4 = -0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
     stoch_noise = np.zeros((len(x),len(x)))
     if noise: 
-        stoch_noise = np.random.normal(0, 0.05, len(x)**2)
+        stoch_noise = np.random.normal(noise_range[0], noise_range[1], len(x)**2)
         stoch_noise = stoch_noise.reshape(len(x), len(x))
 
     return term1 + term2 + term3 + term4 + stoch_noise
@@ -217,9 +217,10 @@ def find_best_lambda(lambda_list, MSE_test=[]):
     half = len(MSE_test)//2
     MSE_best = 100000
     best_lambda = None
+    index = 0 
     for i in range(len(lambda_list)): 
-        if np.mean(MSE_test[half:]) <= MSE_best: 
+        if np.sum(MSE_test[i][half:]) < MSE_best: 
             best_lambda = lambda_list[i]
-            MSE_best = np.mean(MSE_test[half:])
-
-    return best_lambda, MSE_best
+            MSE_best = np.sum(MSE_test[i][half:])
+            index = i 
+    return best_lambda, index

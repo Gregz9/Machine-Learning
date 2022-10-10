@@ -20,34 +20,42 @@ from utils import (
     KFold_split, predict, compute_betas_ridge, MSE,
     compute_optimal_parameters, find_best_lambda)
 
-def plot_figs(*args):
-    fig, axs = plt.subplots(2,2)
+def plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, var, bias, degs, lambdas):
+    fig, axs = plt.subplots(2,3)
+    fig.suptitle("Plots for analysis of bias-varaince trade-off for ascending values of lambda")
+    k = 0
+    for i in range(axs.shape[0]): 
+        for j in range(axs.shape[1]):
+            axs[i,j].set_title(f'Lambda value {lambdas[k]}')
+            axs[i,j].plot(degs, MSE_train[k], 'b', label='MSE_train') 
+            axs[i,j].plot(degs, MSE_test[k], 'r', label='MSE_test')
+            axs[i,j].plot(degs, var[k], 'g', label='variance')
+            axs[i,j].plot(degs, bias[k], 'y', label='bias')
+            axs[i,j].set_xlabel('Polynomial order')
+            axs[i,j].set_ylabel('Mean Squared Error')
+            axs[i,j].legend()
+            k += 1
+
+    plt.show()
+
+
+def plot_best_lambda_bv(MSE_train, MSE_test, var, bias, degs, lambda_):
+    
+    fig, axs = plt.subplots(1,2)
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
 
-    axs[0,0].plot(args[4], args[0][5], 'b', label='MSE_train') 
-    axs[0,0].plot(args[4], args[1][5], 'r', label='MSE_test')
-    axs[0,0].set_xlabel('Polynomial order')
-    axs[0,0].set_ylabel('Mean Squared Error')
-    axs[0,0].legend()
-    axs[0,1].plot(args[4], args[1][5], 'b', label='MSE_test')
-    axs[0,1].plot(args[4], args[2][5], 'y', label='bias')
-    axs[0,1].plot(args[4], args[3][5], 'g', label='variance')
-    axs[0,1].set_xlabel('Polynomial order')
-    axs[0,1].set_ylabel('Mean Squared Error')
-    axs[0,1].legend()
-
-    axs[1,0].plot(args[4], args[0][0], 'b', label='MSE_train') 
-    axs[1,0].plot(args[4], args[1][0], 'r', label='MSE_test')
-    axs[1,0].set_xlabel('Polynomial order')
-    axs[1,0].set_ylabel('Mean Squared Error')
-    axs[1,0].legend()
-
-    axs[1,1].plot(args[4], args[1][0], 'b', label='MSE_test')
-    axs[1,1].plot(args[4], args[2][0], 'y', label='bias')
-    axs[1,1].plot(args[4], args[3][0], 'g', label='variance')
-    axs[1,1].set_xlabel('Polynomial order')
-    axs[1,1].set_ylabel('Mean Squared Error')
-    axs[1,1].legend()
+    axs[0].plot(degs, MSE_train, 'b', label='MSE_train') 
+    axs[0].plot(degs, MSE_test, 'r', label='MSE_test')
+    axs[0].set_xlabel('Polynomial order')
+    axs[0].set_ylabel('Mean Squared Error')
+    axs[0].legend()
+    
+    axs[1].plot(degs, MSE_test, 'b', label='MSE_test') 
+    axs[1].plot(degs, var, 'g', label='variance')
+    axs[1].plot(degs, bias, 'y', label='bias')
+    axs[1].set_xlabel('Polynomial order')
+    axs[1].set_ylabel('bias/variance')
+    axs[1].legend()
 
     plt.show()
 
@@ -189,9 +197,14 @@ if __name__ == '__main__':
     x,y = generate_determ_data(n_points)
     lambdas = np.logspace(-12,-3,n_lambdas)
     #MSE_train, MSE_test, deg = Ridge_reg_kFold(x,y,lambdas=lambdas, folds=10, r_seed=79, scaling=False)
-    MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=79, n_points=20, n_boots=100, degrees=11) 
-    lam, mse_ = find_best_lambda(lambdas, MSE_test)
-    print(lam)
+    MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=79, n_points=20, n_boots=100, degrees=12) 
+    
+    lam, index = find_best_lambda(lambdas, MSE_test)
+    
+    plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, variance_, bias_, deg, lambdas)
+    plot_best_lambda_bv(MSE_test[index], variance_[index], bias_[index], deg, lam)
+    
+    
     #plot_figs_kFold(MSE_train, MSE_test, deg)
 
     # good random_seeds = [79, 227
