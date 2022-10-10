@@ -11,8 +11,8 @@ from numpy.core import _asarray
 from sklearn.metrics import mean_squared_error
 from utils import ( 
     FrankeFunction, generate_random_data, create_X, generate_determ_data, 
-    compute_optimal_parameters, predict, R2, MSE)
-from Regression import OLS_reg
+    compute_optimal_parameters, predict, R2, MSE, compute_betas_ridge)
+from Regression import OLS_reg, Ridge_reg
 from plot_functions import compare_prediction, plot_figs_single_run
     
 def task_a(n_points=20, noisy=True, centering=True, degrees=11, r_seed=79):
@@ -25,4 +25,12 @@ def task_a(n_points=20, noisy=True, centering=True, degrees=11, r_seed=79):
     plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, betas)
     compare_prediction(x,y,z,preds_cn[4], 5)
 
-task_a()
+
+x,y = generate_determ_data(20)
+
+(betas, MSE_train, MSE_test, 
+R2_train, R2_test, preds_cn, x, y, z) = Ridge_reg(x, y, n_points=20, lambda_=1.586e-5, scaling=True, noisy=True, degrees=11, r_seed=79)
+
+
+plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, betas)
+compare_prediction(x,y,z,preds_cn[9], 10)
