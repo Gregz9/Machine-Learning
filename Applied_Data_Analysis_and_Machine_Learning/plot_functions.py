@@ -61,7 +61,7 @@ def compare_all_predictions(x, y, z, pred_vis_ols, pred_vis_ridge, pred_vis_lass
     ax.set_zlim(-0.10, 1.40)
     ax.zaxis.set_major_locator(LinearLocator(10))
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-    ax.set_title("Frankes's function")
+    ax.set_title("Original data/terrain")
 
     ax = fig.add_subplot(2, 2, 2, projection='3d')
     ax.plot_surface(x, y, pred_vis_ols, cmap=cmp, linewidth=0, antialiased=False)
