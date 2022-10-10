@@ -22,43 +22,22 @@ def plot_OLS_kFold_figs(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
     
     fig, axs = plt.subplots(2,2)
     fig.suptitle('MSE values for varying values of fold-splits')
-    color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
-
-    axs[0,0].plot(degs, MSE_train[0], 'b', label='MSE_train') 
-    axs[0,0].plot(degs, MSE_test[0], 'r', label='MSE_test')
-    if len(MSE_test_SKL) > 0: 
-        axs[0,0].plot(degs, MSE_test_SKL[0], 'k--', label='MSE_test_scikit')
-    axs[0,0].set_title(f'{folds[0]}-folds')
-    axs[0,0].set_xlabel('Polynomial order')
-    axs[0,0].set_ylabel('Mean Squared Error')
-    axs[0,0].legend()
     
-    axs[0,1].plot(degs, MSE_train[1], 'b', label='MSE_train') 
-    axs[0,1].plot(degs, MSE_test[1], 'r', label='MSE_test')
-    if len(MSE_test_SKL) > 0: 
-        axs[0,1].plot(degs, MSE_test_SKL[1], 'k--', label='MSE_test_scikit')
-    axs[0,1].set_title(f'{folds[1]}-folds')
-    axs[0,1].set_xlabel('Polynomial order')
-    axs[0,1].set_ylabel('Mean Squared Error')
-    axs[0,1].legend()
+    k = 0
+    for i in range(axs.shape[0]):
+        for j in range(axs.shape[1]):
+            if k == len(folds): 
+                break
+            axs[i,j].plot(degs, MSE_train[k], 'b', label='MSE_train') 
+            axs[i,j].plot(degs, MSE_test[k], 'r', label='MSE_test')
+            if len(MSE_test_SKL) > 0: 
+                axs[i,j].plot(degs, MSE_test_SKL[k], 'k--', label='MSE_test_scikit')
+            axs[i,j].set_title(f'{folds[k]}-folds')
+            axs[i,j].set_xlabel('Polynomial order')
+            axs[i,j].set_ylabel('Mean Squared Error')
+            axs[i,j].legend()
+            k += 1 
 
-    axs[1,0].plot(degs, MSE_train[2], 'b', label='MSE_train') 
-    axs[1,0].plot(degs, MSE_test[2], 'r', label='MSE_test')
-    if len(MSE_test_SKL) > 0: 
-        axs[1,0].plot(degs, MSE_test_SKL[2], 'k--', label='MSE_test_scikit')
-    axs[1,0].set_title(f'{folds[2]}-folds')
-    axs[1,0].set_xlabel('Polynomial order')
-    axs[1,0].set_ylabel('Mean Squared Error')
-    axs[1,0].legend()
-
-    axs[1,1].plot(degs, MSE_train[3], 'b', label='MSE_train') 
-    axs[1,1].plot(degs, MSE_test[3], 'r', label='MSE_test')
-    if len(MSE_test_SKL) > 0: 
-        axs[1,1].plot(degs, MSE_test_SKL[3], 'k--', label='MSE_test_scikit')
-    axs[1,1].set_title(f'{folds[3]}-folds')
-    axs[1,1].set_xlabel('Polynomial order')
-    axs[1,1].set_ylabel('Mean Squared Error')
-    axs[1,1].legend()
     plt.show() 
 
 def OLS_reg_kFold(x,y,z=None,n_points=20, degrees=5, folds=5, scaling=False, noisy=True, r_seed=79): 
@@ -182,3 +161,4 @@ def task_d(n_points=20, order=10, noisy=True, centering=True, include_comparison
         
     plot_OLS_kFold_figs(MSE_train_folds, MSE_test_folds, pol, folds, MSE_test_scikit)
 
+#task_d()

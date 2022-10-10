@@ -20,7 +20,7 @@ from utils import (
     KFold_split, predict, compute_betas_ridge, MSE,
     compute_optimal_parameters, find_best_lambda)
 from taskc import OLS_reg_boot
-from taskd import OLS_reg_kFold
+from taskd import OLS_reg_kFold, plot_OLS_kFold_figs
 
 def plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, var, bias, degs, lambdas):
     fig, axs = plt.subplots(2,3)
@@ -61,24 +61,21 @@ def plot_compare_bootstrap_OLS(MSE_test_Ridge, var_Ridge, bias_Ridge, degs, lamb
 
     plt.show()
 
-def plot_kFold_taks_e(MSE_train, MSE_test_ridge, folds, degs):
-    pass
-
-def plot_figs_kFold_compare_OLS(MSE_train_ridge, MSE_test_ridge, MSE_train_OLS, MSE_test_OLS, degs):
+def plot_figs_kFold_compare_OLS(MSE_train_ridge, MSE_test_ridge, MSE_train_OLS, MSE_test_OLS, degs, folds):
     fig, axs = plt.subplots(3,2)
     fig.suptitle('MSE values for training and test data for varying degrees of kfold-splits')
     k = 0
     for i in range(axs.shape[0]): 
         for j in range(axs.shape[1]):
-            if i == 0: 
-                axs[i,j].set_title('Kfold for Rigde regression with optimal beta')
+            if j == 0: 
+                axs[i,j].set_title(f'{folds[k]}-folds for Rigde regression with optimal beta')
                 axs[i,j].plot(degs, MSE_train_ridge[k], 'b', label='MSE_train') 
                 axs[i,j].plot(degs, MSE_test_ridge[k], 'r', label='MSE_test')
                 axs[i,j].set_xlabel('Polynomial order')
                 axs[i,j].set_ylabel('Mean Squared Error')
                 axs[i,j].legend()
-            elif i == 1:
-                axs[i,j].set_title('Kfold for OLS regression')
+            elif j == 1:
+                axs[i,j].set_title(f'{folds[k]}-folds for OLS regression')
                 axs[i,j].plot(degs, MSE_train_OLS[k], 'b', label='MSE_train') 
                 axs[i,j].plot(degs, MSE_test_OLS[k], 'r', label='MSE_test')
                 axs[i,j].set_xlabel('Polynomial order')
@@ -153,16 +150,16 @@ def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, sc
     X = create_X(x,y,degrees, centering=scaling)
     z=z.ravel()
     train_ind, test_ind = KFold_split(z=z, k=folds)
-
+    
     MSE_train = np.empty((lambdas.shape[0], degrees))
     MSE_test = np.empty((lambdas.shape[0], degrees))
-    polydegree = np.zeros(degrees)
+    
 
     for k in range(len(lambdas)): 
         print(f'Lamda value:{lambdas[k]}')
         MSE_train_list = np.empty(degrees)
         MSE_test_list = np.empty(degrees)
-       
+        polydegree = np.zeros(degrees)
         for degree in range(1, degrees+1): 
             print(f'Polynomial degree {degree}')
 
@@ -192,7 +189,7 @@ def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, sc
 
             MSE_train_list[degree-1] = training_error/folds
             MSE_test_list[degree-1] = test_error/folds 
-            polydegree[degree-1] = degrees
+            polydegree[degree-1] = degree
 
         MSE_train[k] = MSE_train_list
         MSE_test[k] = MSE_test_list
@@ -200,39 +197,45 @@ def Ridge_reg_kFold(x, y, lambdas, z =None, n_points=20, degrees=10, folds=5, sc
     return MSE_train, MSE_test, polydegree
 
 def task_e(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,       
-            noisy=True, centering=True, compare=False, resampling_type='bootstrap'):
+            noisy=True, centering=True, compare=False):
 
     x,y = generate_determ_data(n_points)
     lambdas = np.logspace(-12,-3,n_lambdas)
 
 
-    MSE_train, MSE_test, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=r_seed, n_points=n_points,
+    MSE_train_boot, MSE_test_boot, bias_, variance_, deg = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=r_seed, n_points=n_points,
                                                                 n_boots=n_boots, degrees=degrees, scaling=centering) 
-    lam, index = find_best_lambda(lambdas, MSE_test)
+    lam, index = find_best_lambda(lambdas, MSE_train_boot)
 
-    plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, variance_, bias_, deg, lambdas)
-    #-----------------------------------------------------------------------------------------------------------------------------""
-    folds = [5,7,10] 
-    MSE_train_folds = np.empty((len(folds), degrees))
-    MSE_test_folds = np.empty((len(folds), degrees))
+    plot_figs_bootstrap_all_lambdas(MSE_train_boot, MSE_test_boot, variance_, bias_, deg, lambdas)
+    #-----------------------------------------------------------------------------------------------------------------------------#
+    folds = [5,8,10] 
+    MSE_train_folds_R = np.empty((len(folds), degrees))
+    MSE_test_folds_R = np.empty((len(folds), degrees))
 
     for i in range(len(folds)):
-        MSE_train, MSE_test, deg = Ridge_reg_kFold(x,y,lambdas=lam, folds=folds[i], r_seed=r_seed, scaling=centering)
-        MSE_train_folds[i], MSE_test_folds[i] = MSE_train, MSE_test
+        
+        MSE_train, MSE_test, deg = Ridge_reg_kFold(x,y,lambdas=np.array([lam]), degrees=degrees, folds=folds[i], r_seed=r_seed, scaling=centering)
+        MSE_train_folds_R[i], MSE_test_folds_R[i] = MSE_train, MSE_test
+    print(deg)
 
+    plot_OLS_kFold_figs(MSE_train_folds_R, MSE_test_folds_R, deg, folds)
+    #-----------------------------------------------------------------------------------------------------------------------------#
     if compare:
         _, MSE_test_ols, bias_ols, var_ols, _ = OLS_reg_boot(x,y,n_points=n_points, degrees=degrees, 
                                                             n_boots=n_boots, noisy=noisy, r_seed=r_seed, scaling=centering) 
-        plot_compare_bootstrap_OLS(MSE_test[index], variance_[index], bias_[index], deg, lam, MSE_test_ols, var_ols, bias_ols)
+        plot_compare_bootstrap_OLS(MSE_test_boot[index], variance_[index], bias_[index], deg, lam, MSE_test_ols, var_ols, bias_ols)
 
-        MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=degrees, 
-                                                    r_seed=r_seed, folds=folds[i], scaling=centering)
-        MSE_train_folds[i], MSE_test_folds[i] = MSE_train, MSE_test
+        MSE_train_folds_O = np.empty((len(folds), degrees))
+        MSE_test_folds_O = np.empty((len(folds), degrees))
 
-    
-    
-    #plot_figs_kFold(MSE_train, MSE_test, deg)
+        for i in range(len(folds)):
+            MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=degrees, 
+                                                        r_seed=r_seed, folds=folds[i], scaling=centering)
+            MSE_train_folds_O[i], MSE_test_folds_O[i] = MSE_train, MSE_test
+
+        plot_figs_kFold_compare_OLS(MSE_train_folds_R, MSE_test_folds_R, MSE_train_folds_O, MSE_test_folds_O, deg, folds)
 
     # good random_seeds = [79, 227
 task_e(compare=True)
-#MSE_train, MSE_test, pol = OLS_reg_kFold(x,y,n_points=n_points, noisy=noisy, degrees=degrees, r_seed=79, folds=folds[i], scaling=True)
+
