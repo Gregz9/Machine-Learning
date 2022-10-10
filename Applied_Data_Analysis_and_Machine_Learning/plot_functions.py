@@ -111,7 +111,7 @@ def plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, beta_values):
 def compare_bootstrap_MSE(MSE_test_ols, MSE_test_ridge, MSE_test_lasso,degs):
     
     fig, axs = plt.subplots(1,1)
-
+    fig.suptitle('Comparison of MSE values derived through bootstrap')
     axs.plot(degs, MSE_test_ols, 'b', label='MSE_test OLS') 
     axs.plot(degs, MSE_test_ridge, 'r', label='MSE_test Ridge')
     axs.plot(degs, MSE_test_lasso, 'purple', label='MSE_test Lasso')

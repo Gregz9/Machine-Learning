@@ -85,6 +85,8 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
         plot_compare_bootstrap_OLS_Ridge(MSE_test_ridge[index_R], var_ridge[index_R], bias_ridge[index_R], lam_R, MSE_test_ols, var_ols, 
                                         bias_ols, MSE_test_boot_best[0], variance__best[0], bias__best[0], lam_L, deg)
 
+        compare_bootstrap_MSE(MSE_test_ols, MSE_test_ridge[index_R], MSE_test_boot_best[0], deg)
+
         MSE_train_folds_R = np.empty((len(folds), degrees))
         MSE_test_folds_R = np.empty((len(folds), degrees))
 
@@ -97,7 +99,7 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
 
             MSE_train_R, MSE_test_R, _ = Ridge_reg_kFold(x,y, lambdas=np.array([lam_R]), n_points=n_points, noisy=noisy, degrees=degrees, 
                                                         r_seed=r_seed, folds=folds[i], scaling=centering)
-                                                        
+
             MSE_train_folds_O[i], MSE_test_folds_O[i] = MSE_train_O, MSE_test_O
             MSE_train_folds_R[i], MSE_test_folds_R[i] = MSE_train_R, MSE_test_R
 
