@@ -19,6 +19,19 @@ def show_prediction(x,y,pred_vis, order, Reg_type):
     
     plt.show()
 
+def show_terrain(x,y,pred_vis, order, Reg_type):
+    fig= plt.figure()
+
+    ax = fig.add_subplot(1, 1, 1, projection='3d')
+    ax.plot_surface(x, y, pred_vis, cmap=cm.terrain, linewidth=0, antialiased=False)
+    ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_title(f"Polynomial fit of {order}-th order using {Reg_type}")
+    
+    plt.show()
+
+
 
 def compare_2_predictions(x,y,z,pred_vis, order):
     fig= plt.figure()
@@ -159,10 +172,10 @@ def plot_kfold_figs_for_k(MSE_train, MSE_test, polydegrees, lambdas_ ,fold=10):
     plt.show()
 
 
-def plot_kFold_figs_for_L(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
+def plot_kFold_figs_for_L(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[], reg_type='OLS'):
     
     fig, axs = plt.subplots(2,2)
-    fig.suptitle('MSE values for varying values of fold-splits')
+    fig.suptitle(f'MSE values using {reg_type} regression for varying values of K')
     
     k = 0
     for i in range(axs.shape[0]):
@@ -181,9 +194,9 @@ def plot_kFold_figs_for_L(MSE_train, MSE_test, degs, folds, MSE_test_SKL=[]):
 
     plt.show() 
 
-def plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, var, bias, degs, lambdas):
+def plot_figs_bootstrap_all_lambdas(MSE_train, MSE_test, var, bias, degs, lambdas, reg_type):
     fig, axs = plt.subplots(2,3)
-    fig.suptitle("Plots for analysis of bias-varaince trade-off for ascending values of lambda")
+    fig.suptitle(f"Plots for analysis of bias-varaince trade-off for {reg_type} regression")
     k = 0
     for i in range(axs.shape[0]): 
         for j in range(axs.shape[1]):
@@ -225,20 +238,21 @@ def plot_compare_bootstrap_OLS_Ridge(MSE_test_Ridge, var_Ridge, bias_Ridge, lamb
                                     bias_OLS, MSE_test_Lasso, var_Lasoo, bias_Lasso, Lambda_L, degs):
      
     fig, axs = plt.subplots(1,3)
+    fig.suptitle('Comparison of the bias-variance trade-off for all three regression types')
     
-    axs[0].set_title(f"Bias-variance Ridge with lamdbda{lambda_R}")
-    axs[0].plot(degs, MSE_test_Ridge, 'b', label='MSE_test') 
-    axs[0].plot(degs, var_Ridge, 'g', label='variance')
-    axs[0].plot(degs, bias_Ridge, 'y', label='bias')
+    axs[0].set_title(f'Bias-variance for ordniary least squares regression')
+    axs[0].plot(degs, MSE_test_OLS, 'b', label='MSE_test') 
+    axs[0].plot(degs, var_OLS, 'g', label='variance')
+    axs[0].plot(degs, bias_OLS, 'y', label='bias')
     axs[0].set_ylim(0.000, 0.030)
     axs[0].set_xlabel('Polynomial order')
     axs[0].set_ylabel('bias/variance')
     axs[0].legend()
 
-    axs[1].set_title(f'Bias-variance for ordniary least squares regression')
-    axs[1].plot(degs, MSE_test_OLS, 'b', label='MSE_test') 
-    axs[1].plot(degs, var_OLS, 'g', label='variance')
-    axs[1].plot(degs, bias_OLS, 'y', label='bias')
+    axs[1].set_title(f"Bias-variance Ridge with lamdbda{lambda_R}")
+    axs[1].plot(degs, MSE_test_Ridge, 'b', label='MSE_test') 
+    axs[1].plot(degs, var_Ridge, 'g', label='variance')
+    axs[1].plot(degs, bias_Ridge, 'y', label='bias')
     axs[1].set_ylim(0.000, 0.030)
     axs[1].set_xlabel('Polynomial order')
     axs[1].set_ylabel('bias/variance')

@@ -5,8 +5,12 @@ import numpy as np
 from utils import ( generate_determ_data, load_and_scale_terrain, find_best_lambda)
 from Regression import (OLS_reg, OLS_reg_boot, OLS_reg_kFold, Ridge_reg, Ridge_reg_boot, Ridge_reg_kFold,
                          Lasso_reg, Lasso_reg_kFold, Lasso_reg_boot)
-from plot_functions import compare_2_predictions, plot_figs_single_run
+from plot_functions import (compare_2_predictions, plot_figs_single_run, compare_all_predictions, 
+                            show_terrain, plot_figs_bootstrap_all_lambdas, plot_kFold_figs_for_L,
+                            plot_compare_bootstrap_OLS_Ridge, compare_bootstrap_MSE, plot_figs_kFold_compare_OLS_Ridge)
 
+
+from plot_functions import plot_OLS_figs_task_C as plot_OLS_bootstrap
 
 def visualize_terrain(x,y,z,pred_vis, order):
     fig= plt.figure()
@@ -42,7 +46,7 @@ def task_g(terrain_file, n_points=20, n_lambdas=6, r_seed=79, n_boots=10, degree
                                                         r_seed=r_seed, scaling=centering)
 
     (Ridge_boot_MSE_train, Ridge_boot_MSE_test, 
-    Ridgr_boot_bias_, Ridge_boot_var, _) = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=r_seed, n_points=n_points,
+    Ridge_boot_bias_, Ridge_boot_var, _) = Ridge_reg_boot(x, y, lambdas=lambdas, r_seed=r_seed, n_points=n_points,
                                                                 n_boots=n_boots, degrees=degrees, scaling=centering) 
 
     lambda_Ridge, index_ridge = find_best_lambda(lambdas, Ridge_boot_MSE_train)
@@ -80,6 +84,56 @@ def task_g(terrain_file, n_points=20, n_lambdas=6, r_seed=79, n_boots=10, degree
         MSE_train_folds_R[i], MSE_test_folds_R[i] = MSE_train_R, MSE_test_R
         MSE_train_folds_L[i], MSE_test_folds_L[i] = MSE_train_L, MSE_test_L
 
+
+    (betas, MSE_train, MSE_test, 
+    R2_train, R2_test, preds_cn, x, y, z) = OLS_reg(x, y, z=ter, scaling=centering, noisy=noisy, degrees=degrees, r_seed=r_seed)
+
+    (R_betas, R_MSE_train, R_MSE_test, 
+    R_R2_train, R_R2_test, R_preds_cn, x, y, z) = Ridge_reg(x, y, z=ter, lambda_=lambda_Ridge, scaling=centering, noisy=noisy, degrees=degrees, r_seed=r_seed)
+    
+    (L_betas, L_MSE_train, L_MSE_test, 
+    L_R2_train, L_R2_test, L_preds_cn, x, y, z) = Lasso_reg(x, y, z=ter, lambda_=lambda_Lasso, scaling=centering, noisy=noisy, degrees=degrees, r_seed=r_seed)
+
+    plot_OLS_bootstrap(OLS_boot_MSE_train, OLS_boot_MSE_train, OLS_boot_var, OLS_boot_bias, degs)
+    plot_figs_bootstrap_all_lambdas(Ridge_boot_MSE_train, Ridge_boot_MSE_test, Ridge_boot_var, Ridge_boot_bias_, degs, lambdas, 'Ridge')
+    plot_figs_bootstrap_all_lambdas(Lasso_boot_MSE_train, Lasso_boot_MSE_test, Lasso_boot_var, Lasso_boot_bias_, degs, lambdas, 'Lasso')    
+    
+    plot_kFold_figs_for_L(MSE_train_folds_O, MSE_test_folds_O, degs, folds, reg_type='OLS')
+    plot_kFold_figs_for_L(MSE_train_folds_R, MSE_test_folds_R, degs, folds, reg_type='Ridge') 
+    plot_kFold_figs_for_L(MSE_train_folds_L, MSE_test_folds_L, degs, folds, reg_type='Lasso') 
+
+    plot_compare_bootstrap_OLS_Ridge(Ridge_boot_MSE_test[index_ridge], Ridge_boot_var[index_ridge], Ridge_boot_bias_[index_ridge],
+                                    lambda_Ridge, OLS_boot_MSE_test, OLS_boot_var, OLS_boot_bias, Lasso_boot_MSE_test[index_lasso],
+                                    Lasso_boot_var[index_lasso], Lasso_boot_bias_[index_lasso], lambda_Lasso, degs)
+    
+    compare_bootstrap_MSE(OLS_boot_MSE_test, Ridge_boot_MSE_test[index_ridge], Lasso_boot_MSE_test[index_lasso], degs)
+
+    plot_figs_kFold_compare_OLS_Ridge(MSE_train_folds_R, MSE_test_folds_R, MSE_train_folds_O, MSE_test_folds_O, 
+                                        MSE_train_folds_L, MSE_test_folds_L, degs, folds)
+   
+    plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, betas, 'OLS')
+    plot_figs_single_run(R_MSE_train, R_MSE_test, R_R2_train, R_R2_test, R_betas, 'Ridge')
+    plot_figs_single_run(L_MSE_train, L_MSE_test, L_R2_train, L_R2_test, L_betas, 'Lasso')
+    
+    compare_all_predictions(x, y, ter, preds_cn[4], R_preds_cn[4], L_preds_cn[4], 5)
+    compare_all_predictions(x, y, ter, preds_cn[6], R_preds_cn[6], L_preds_cn[6], 7)
+    compare_all_predictions(x, y, ter, preds_cn[8], R_preds_cn[8], L_preds_cn[8], 9)
+    compare_all_predictions(x, y, ter, preds_cn[10], R_preds_cn[10], L_preds_cn[10], 11)
+
+    show_terrain(x, y, preds_cn[4], 5, 'OLS')
+    show_terrain(x, y, preds_cn[6], 7, 'OLS')
+    show_terrain(x, y, preds_cn[8], 9, 'OLS')
+    show_terrain(x, y, preds_cn[10], 11, 'OLS')
+
+    show_terrain(x, y, R_preds_cn[4], 5, 'Ridge')
+    show_terrain(x, y, R_preds_cn[6], 7, 'Ridge')
+    show_terrain(x, y, R_preds_cn[8], 9, 'Ridge')
+    show_terrain(x, y, R_preds_cn[10], 11, 'Ridge')
+
+    show_terrain(x, y, R_preds_cn[4], 5, 'Lasso')
+    show_terrain(x, y, R_preds_cn[6], 7, 'Lasso')
+    show_terrain(x, y, R_preds_cn[8], 9, 'Lasso')
+    show_terrain(x, y, R_preds_cn[10], 11, 'Lasso')        
     """(betas, MSE_train, MSE_test, 
     R2_train, R2_test, preds_cn, x, y, z) = OLS_reg(x,y,z=ter, n_points=N, degrees=degrees, r_seed=r_seed, noisy=noisy, scaling=True)
     plot_figs_single_run(MSE_train, MSE_test, R2_train, R2_test, betas, 'OLS')
