@@ -53,10 +53,10 @@ def compare_2_predictions(x,y,z,pred_vis, order):
     
     plt.show()
 
-def compare_all_predictions(x, y, z, pred_vis_ols, pred_vis_ridge, pred_vis_lasso, order):
+def compare_all_predictions(x, y, z, pred_vis_ols, pred_vis_ridge, pred_vis_lasso, order, cmp=cm.coolwarm):
     fig= plt.figure()
     ax = fig.add_subplot(2, 2, 1, projection='3d')
-    ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.plot_surface(x, y, z, cmap=cmp, linewidth=0, antialiased=False)
 
     ax.set_zlim(-0.10, 1.40)
     ax.zaxis.set_major_locator(LinearLocator(10))
@@ -64,21 +64,21 @@ def compare_all_predictions(x, y, z, pred_vis_ols, pred_vis_ridge, pred_vis_lass
     ax.set_title("Frankes's function")
 
     ax = fig.add_subplot(2, 2, 2, projection='3d')
-    ax.plot_surface(x, y, pred_vis_ols, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.plot_surface(x, y, pred_vis_ols, cmap=cmp, linewidth=0, antialiased=False)
     ax.set_zlim(-0.10, 1.40)
     ax.zaxis.set_major_locator(LinearLocator(10))
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
     ax.set_title(f"Polynomial fit of {order}-th order using OLS")
 
     ax = fig.add_subplot(2, 2, 3, projection='3d')
-    ax.plot_surface(x, y, pred_vis_ridge, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.plot_surface(x, y, pred_vis_ridge, cmap=cmp, linewidth=0, antialiased=False)
     ax.set_zlim(-0.10, 1.40)
     ax.zaxis.set_major_locator(LinearLocator(10))
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
     ax.set_title(f"Polynomial fit of {order}-th order using Ridge")
 
     ax = fig.add_subplot(2, 2, 4, projection='3d')
-    ax.plot_surface(x, y, pred_vis_lasso, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    ax.plot_surface(x, y, pred_vis_lasso, cmap=cmp, linewidth=0, antialiased=False)
     ax.set_zlim(-0.10, 1.40)
     ax.zaxis.set_major_locator(LinearLocator(10))
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
