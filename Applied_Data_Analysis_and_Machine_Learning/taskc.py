@@ -6,7 +6,7 @@ from utils import generate_determ_data
 from Regression import OLS_reg_boot 
 from plot_functions import plot_OLS_figs_task_C
 
-def task_c(n_points=20, noisy=True, centering=True,  degrees=11, n_boots=100, r_seed=79):
+def task_c(n_points=10, noisy=True, centering=True,  degrees=11, n_boots=100, r_seed=79):
 
     x, y = generate_determ_data(n_points)
         

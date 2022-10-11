@@ -32,15 +32,15 @@ def visualize_terrain(x,y,z,pred_vis, order):
     ax.set_title(f"Polynomial fit of {order}-th order")
     plt.show()
 
-def task_g(terrain_file, n_lambdas=6, r_seed=79, n_boots=100, degrees=20,       
+def task_g(terrain_file, n_lambdas=6, r_seed=79, n_boots=10, degrees=20,       
             noisy=True, centering=True, compare=False, kfold_for_all_lam=False):
     
     #Starting off by loading a part of the terrain from the tif file
     terrain,N = load_and_scale_terrain(terrain_file)
     N1=30
-    n_points=N1
-    x, y = generate_determ_data(N1)
-    ter = terrain[:N1,:N1]
+    n_points=N
+    x, y = generate_determ_data(N)
+    ter = terrain[:N,:N]
     ter2 = terrain[:N, :N]
     lambdas = np.logspace(-10,0,n_lambdas)
 

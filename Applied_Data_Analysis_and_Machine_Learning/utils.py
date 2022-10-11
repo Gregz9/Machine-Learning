@@ -214,7 +214,7 @@ def find_best_lambda(lambda_list, MSE_test=[]):
     for both the training and test data sets.
     """
     
-    half = len(MSE_test)//2
+    half = len(MSE_test[0])//2
     MSE_best = 100000
     best_lambda = None
     index = 0 

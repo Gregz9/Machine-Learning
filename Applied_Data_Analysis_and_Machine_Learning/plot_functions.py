@@ -151,7 +151,7 @@ def plot_OLS_figs_task_C(MSE_train, MSE_test, var, bias, degs):
     
     fig, axs = plt.subplots(1,2)
     color_list = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'purple']
-
+    fig.suptitle('MSE and bias-variance trade-off for OLS regression')
     axs[0].plot(degs, MSE_train, 'b', label='MSE_train') 
     axs[0].plot(degs, MSE_test, 'r', label='MSE_test')
     axs[0].set_xlabel('Polynomial order')
