@@ -1,0 +1,185 @@
+\documentclass[a4paper, 10pt]{article}
+\usepackage[pdftex]{graphicx}
+\usepackage{fullpage}
+\usepackage{longtable}
+\usepackage{lipsum}
+\usepackage{amssymb}
+\usepackage[utf8]{inputenc}
+\usepackage{dsfont}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{geometry}
+\usepackage{enumerate}
+\usepackage{sidecap}
+\usepackage{mdframed}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{capt-of}
+\usepackage{booktabs}
+\usepackage{savetrees}
+\usepackage{xspace}
+\usepackage{titlesec}
+\usepackage{blindtext}
+\sloppy
+
+\title{\Large Linear Regression and Resampling Methods \\	
+		 \normalsize Project 1 FYS-STK4155}
+	
+\author{Grzegorz Dariusz Kajda}
+
+\newcounter{rowno}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	The following paper presents research conducted for the methods of Linear Regression, resampling techniques used for assesment of the models, and their application to real terrain data. The study of the regression methods starts with the application of Ordinary Lest Squares regression to a dataset consisting of polynomials of x and y, and fitting of said polynomials to Franke function. The models performance is then measuered through the mean squared error (MSE) function and R2-score, before being evalueated through the application of resampling techniques. Stating with bootstrap resampling, we are able to analyze the MSE in terms of a decompostion to bias and variance. We then proceed with applying kFold cross-validation to assess the models performance by dividing our data into k datasets. This process is then repeated for two other variants of regression, namely Ridge and Lasso regressions.  
+
+	The study then proceeds by applying resampling techniques of bootstrap and kFold cross-validation to evaluate our model of the OLS, and repeat the process for Ridge and Lasso regression afterwards. By applying bootstrap to all three models, we are able to visualize the bias-variance tradeoff, and thus study the mean squared error as a function of bias and variance. By compairing the results of each model, we find that Ridge regression gives rise to the best fit, with OLS coming in second, while Lasso struggles to converge, making it difficult to gauge its performance.
+
+	Testing the models using topograhic data yeilded better results for Lasso regression, however the computational expenses associated with its coordinate decenta algorithm proved to be a major limiting factor fo rits performance. Thus Ridge regression once again proves to produce the best fit, with the OLS falling slightly behind.      
+\end{abstract}
+\linespread{2.5}
+\tableofcontents
+
+\linespread{2.5}
+\section{Introduction}
+In a world experiencing an abundance of data never seen before, the wish of predicting the unkown has never been stronger. While the ability to predict unseen data is a nontrivial task, it most certainly is possible, and with the use of adequate tools, one may take advantage of the underlaying patterns that much of the data surrounding us displays. Today, one of the most commonly used methods for uncovering relationships between variables is machine learning, a filed within artificial intelligence which has made astounishing progress in the field of learning from data since 2011. And although there still exist problems that machine algorithms may struggle with, we shall prove that for many tasks, simple methods such as regression analysis will suffice. 
+
+
+
+Hence, we are going study three different variants of regression in this article, namely the Ordinary Least Squares regression, Ridge regression and Lasso regression. We will start by genereting a small dataset with an addition of stochastic noise to it, and use it with our models to fit polynomials upto n-th order to the Franke Function. While doing this, the models will be evalueated on the basis of the mean squared error and R2-score. Resampling techniques known as bootstrap and kFold cross-validation will also be applied in order to assess the performance of our models. When we have become familiar with the possible optimization techniques for our algorithms, we will apply our models to realterrain data.  
+For the sake of context, this article has been divided into four major parts, the first being the introduction. The section that follows will present relevant mathematical theory, while section 3 will present the results obtained during the practical part along with a discussion of the results. The article will end with a conclusion.
+\linespread{2.5}
+
+\section{Theory}
+
+\subsection{Linear models}
+As mentioned in the introduction, linear regression is based on the assumption of linear relationships between observations or variables. From the statistical point of view, this means that if we're given a dependent variable y, we can explain the variable through a set of k feauteres $x = (x_0, x_1, x_2, ... x_{k-1})$. Hence, this can be mathematically stated as follows: 
+
+\begin{gather*}
+	\textbf{y} = f(\textbf{x}) + \epsilon
+\end{gather*}
+
+This linear relationship can be rewritten in terms of a linear model, by introducing a set of coefficients $\beta = (\beta_{0}, \beta_{1}, \beta_{2}, ... , \beta_{p-1})$. This allows to transform the equation from above to the form: 
+
+\begin{gather*}
+	\tilde{y} = \textbf{x}^T\beta
+\end{gather*}
+
+Expanding this logic to a dataset of m response variables $y = (y_0, y_1, y_2, ... , y_{m-1})$, we can rewrite this equation again, now by stacking all feature vectors on top each other to form a design matrix \textbf{X}: 
+
+$$
+\boldsymbol{X}=
+\begin{bmatrix} 
+1& x_{0}^1 &x_{0}^2& \dots & \dots &x_{0}^{k-1}\\
+1& x_{1}^1 &x_{1}^2& \dots & \dots &x_{1}^{k-1}\\
+1& x_{2}^1 &x_{2}^2& \dots & \dots &x_{2}^{k-1}\\                      
+\dots& \dots &\dots& \dots & \dots &\dots\\
+1& x_{m-1}^1 &x_{m-1}^2& \dots & \dots &x_{m-1}^{k-1}\\
+\end{bmatrix}
+$$
+
+We can now write the problem of linear regression in terms of the product of the design matrix and regression parameters $\beta$: 
+\begin{gather*}
+	\tilde{y} = \textbf{X}\beta
+\end{gather*}
+
+This equation can now be analytically solved for optimal values of the parameters $\beta$
+
+
+Now, in a general linear model, we assume that we can parametrize our function terms of a polynomial of degree \emph{n-1}: 
+
+
+\begin{gather*}
+	\textbf{ $y=y(x) \rightarrow y(x_i) = \tilde{y_i} + \epsilon_i = \Sigma_{j=0}^{n-1} 
+						\beta_jx_i^j + \epsilon_i$}
+\end{gather*}
+
+With a little linear algebra, this equation can be rewritten to a simplier form: 
+
+\begin{gather*}
+	\textbf{ $y=X\beta + \epsilon$}
+\end{gather*}
+
+
+\subsection{Ordinary Least Squares}
+
+\subsection{Ridge Regression}
+
+\subsection{Lasso Regression}
+
+
+
+\section{Appendix A - Analytical Solution of OLS}
+Now let us assume that there exists a continous function \emph(f(x)) with a normally distributed error $\epsilon$ ~ \emph{N(0,$\sigma^2$)} which describes our data: 
+
+\begin{gather*}
+	\textbf{ $y=f(x) + \epsilon$}
+\end{gather*}
+
+Function f(x) has been approximated through our model \textbf{$\tilde{y}$}, where we minimized the \emph{Residuals sum of squares} \textbf{$(y-\tilde{y})^2$}, where: 
+
+\begin{gather*}
+	\textbf{ $\tilde{y}=X\beta$}
+\end{gather*}
+As we know, \textbf{X} is our design matrix containing all of the independent variables \textbf{x} used to approximate \textbf{y}. We are now going to show that the expectation value of \textbf{y} for any given element \emph{i} can be written in the following way: 
+
+\begin{gather*}
+	\mathbb{E}[y] = \Sigma_{j} x_{i} \beta_{j} = X_i,* \beta 
+\end{gather*}
+
+Let us start the proof with the element by rewriting the expactation value of \textbf{y}:
+
+\begin{gather*}
+	\mathbb{E}[y] = (1/n)*\Sigma_{j} y_{i} = (1/n)*\Sigma_{i=0} (f(x_i) + \epsilon_i) 
+\end{gather*}
+
+Now we see that in order to prove out that $\mathbb{E}[y]$ is equal to the product $X_{i,*}\beta$, we need to prove that the value of $\epsilon_{i} = 0$. We can easily do it by finding the first derivative of the cost functions MSE: 
+
+\begin{gather*}
+	\frac{\partial C(\beta)}{\partial \beta} = 0
+\end{gather*}
+
+As you can see, we set the derivative equal to zero in order to find the optimal parameters that will minimize our error. 
+
+\begin{gather*}
+	X^T(y-X\beta) = X^Ty - X^TX = 0
+\end{gather*}
+
+Now if this matrix $X^TX$ is invertible, which it is only if X is orthonormal, then with little algebra, we have the following solution for the optimal parameters: 
+
+\begin{gather*}
+	\beta = (X^TX)^{-1}X^Ty
+\end{gather*}
+
+Now in the situation where $X^TX$ is invertible, the error which we try to minimize will be equal to zero: 
+
+\begin{gather*}
+	\epsilon = y - \tilde{y} = y - X(X^TX)^{-1}X^Ty = y - y = 0 
+\end{gather*}
+
+If you pay attention however, we could've from the start assumed that the value of $\epsilon=0$, and written the proof in the following way: 
+
+\begin{gather*}
+	\mathbb{E}[y_i] = \mathbb{E}[X_i,*+beta] + \mathbb{E}[\epsilon_i] \\
+						= X_i,*beta + 0 = \mathbb{E}[y] = X_i,*beta
+\end{gather*}
+
+This is simply caused by $\mathbb{E}[\epsilon_i]$ being by definition equal to zero, as it can be interpreted as the mean value of the error. Since the the mean value of the distribution of $\epsilon$ is equal to zero, we can write $\epsilon_i=0$. Now the next thing we are going to prove, is that the variance of $y_i$ is equal to $\sigma^2$. From the lecture notes and \emph{Pattern Recognition and Machine Learning by Christopher M. Bishop}, we know that the equation giving us variance, can be written in terms of a expectation value: 
+
+\begin{gather*}
+			Var(y_i) = \mathbb{E}[y_i - \mathbb{E}[y_i]] = \mathbb{E}[y_i^2] - (\mathbb{E}[y_i])^2 \\
+										= \mathbb{E}[(X_i,*\beta + \epsilon_i)^2] - (X_i,*\beta)^2 \\
+										= \mathbb{E}[(X_i,*\beta)^2 + 2\epsilon_iX_i,*\beta + \epsilon_i^2] - (X_i,*\beta)^2
+										= (X_i,*\beta)^2 + 2\mathbb{E}
+\end{gather*}
+
+\end{document}
+
+

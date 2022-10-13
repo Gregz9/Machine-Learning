@@ -25,6 +25,7 @@
 \usepackage{xspace}
 \usepackage{titlesec}
 \usepackage{blindtext}
+\graphicspath{/home/gregz9/Files/MachineLearning/Applied_Data_Analysis_and_Machine_Learning/Report_figures/}
 \sloppy
 
 \setlength{\parskip}{1em}
@@ -40,11 +41,8 @@
 \maketitle
 
 \begin{abstract}
-	The following paper presents research conducted for the methods of Linear Regression, resampling techniques used for assesment of the models, and their application to real terrain data. The study of the regression methods starts with the application of Ordinary Lest Squares regression to a dataset consisting of polynomials of x and y, and fitting of said polynomials to Franke function. The models performance is then measuered through the mean squared error (MSE) function and R2-score, before being evalueated through the application of resampling techniques. Stating with bootstrap resampling, we are able to analyze the MSE in terms of a decompostion to bias and variance. We then proceed with applying kFold cross-validation to assess the models performance by dividing our data into k datasets. This process is then repeated for two other variants of regression, namely Ridge and Lasso regressions.  
-
-	The study then proceeds by applying resampling techniques of bootstrap and kFold cross-validation to evaluate our model of the OLS, and repeat the process for Ridge and Lasso regression afterwards. By applying bootstrap to all three models, we are able to visualize the bias-variance tradeoff, and thus study the mean squared error as a function of bias and variance. By compairing the results of each model, we find that Ridge regression gives rise to the best fit, with OLS coming in second, while Lasso struggles to converge, making it difficult to gauge its performance.
-
-	Testing the models using topograhic data yeilded better results for Lasso regression, however the computational expenses associated with its coordinate decenta algorithm proved to be a major limiting factor fo rits performance. Thus Ridge regression once again proves to produce the best fit, with the OLS falling slightly behind.      
+	The following paper presents research conducted for the methods of Linear Regression, resampling techniques used for assesment of the models, and their application to real terrain data. The study of the regression methods starts with the application of Ordinary Lest Squares regression to a dataset consisting of polynomials of x and y, and fitting of said polynomials to Franke function. We measure models performance through the use of MSE and R2-score, and then evaluate it further using resampling techniques known as bootstrapping and kfold cross-validation. After finishing the evaulation of OLS, we repeat this process for Ridge and Lasso regressions, and compare the results of each model against each other. The evaluation process shows that Ridge regression clearly fits the data best, with OLS falling only slightly behind, while Lasso regression turns out to be computationally expensise.
+By the end of this project we also test the models using topograhic data. Unsuprisingly, Ridge regresison delivers the best performance out of all the models, with OLS coming in a close second position. The Lasso regression pn the other hand struggles to achieve comparable results, and takes considerably longer time predicting than the two other regression models.       
 \end{abstract}
 \linespread{2.5}
 \tableofcontents
@@ -353,6 +351,8 @@ Thorughout this project we are going to scale training data using the method of 
 
 
 \section{Results}
+
+
 
 \section{Conclussion and discussion of results}
 

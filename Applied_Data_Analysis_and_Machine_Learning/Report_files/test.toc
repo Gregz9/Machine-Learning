@@ -1,0 +1,16 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{}%
+\contentsline {section}{\numberline {2}Theory}{3}{}%
+\contentsline {subsection}{\numberline {2.1}Linear models}{3}{}%
+\contentsline {subsubsection}{\numberline {2.1.1}Ordinary Least Squares}{4}{}%
+\contentsline {subsubsection}{\numberline {2.1.2}Ridge Regression}{5}{}%
+\contentsline {subsubsection}{\numberline {2.1.3}Lasso Regression}{6}{}%
+\contentsline {subsection}{\numberline {2.2}Singular Value Decomposition}{6}{}%
+\contentsline {subsection}{\numberline {2.3}Metrics for measurement of performance}{7}{}%
+\contentsline {subsection}{\numberline {2.4}Resampling techniques}{8}{}%
+\contentsline {subsubsection}{\numberline {2.4.1}The Bootstrap}{8}{}%
+\contentsline {subsubsection}{\numberline {2.4.2}kFold cross-validation}{10}{}%
+\contentsline {subsection}{\numberline {2.5}The Datasets}{10}{}%
+\contentsline {subsection}{\numberline {2.6}Preprocessing of Data}{10}{}%
+\contentsline {section}{\numberline {3}Results}{11}{}%
+\contentsline {section}{\numberline {4}Conclussion and discussion of results}{11}{}%
+\contentsline {section}{\numberline {5}Appendix A - Analytical Solution of OLS}{11}{}%
