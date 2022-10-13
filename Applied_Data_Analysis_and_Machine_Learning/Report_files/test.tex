@@ -133,13 +133,43 @@ $$
 \boldsymbol{X}^T\boldsymbol{y} = \boldsymbol{X}^T\boldsymbol{X}\boldsymbol{\beta},
 $$
 
-In the simple case where the matrix $X^TX$ is invertible, we can simply solve this equation by multiplying both sides from the left with the inverse of this matrix, $(X^TX)^(-1)$, giving us
+In the simple case where the matrix $X^TX$ is invertible, we can simply solve this equation by multiplying both sides from the left with the inverse of this matrix, $(X^TX)^{-1}$, giving us
 
 $$
-\boldsymbol{\beta} =\left(\boldsymbol{X}^T\boldsymbol{X}\right)^{-1}\boldsymbol{X}^T\boldsymbol{y}.
+\boldsymbol{\beta_{optimal}} =\left(\boldsymbol{X}^T\boldsymbol{X}\right)^{-1}\boldsymbol{X}^T\boldsymbol{y}.
 $$
+
+This means that we can now compute the prediction of our model as simply as
+
+$$
+\boldsymbol{\tilde{z}} = \boldsymbol{X} \boldsymbol{\beta_{optimal}}
+$$
+
+The size of our design matrix defined as $\boldsymbol{X}\in {\mathbb{R}}^{k\times n}$ may possibly be quite large in situations where the number of predictors per response variable is a lot smaller than the number of response variables $(k \ll n)$. Although it may seem like a heavy computation to perform, the fact that $\boldsymbol{X^TX}$ is invertible assures a low-dimensional product matrix of dimension \emph{k} x \emph{k}, hence allowing for a efficient calculation process. 
 
 \subsubsection{Ridge Regression}
+In the solution for the optimal parameters for the least squares we introduced the cost function called mean sqaured error, which we then used to transform the regression problem to a optimization problem by minimizing the value of the cost function 
+
+$$
+{\displaystyle \min_{\boldsymbol{\beta}\in
+{\mathbb{R}}^{p}}}\frac{1}{n}\vert\vert \boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\vert\vert_2^2,
+$$
+
+where we used the definition of the \emph{Euclidean $L^2$-norm}
+
+$$
+\vert\vert \boldsymbol{x}\vert\vert_2 = \sqrt{\sum_i x_i^2}.
+$$
+
+
+While this approach proves to be quite efficient when applied to many problems, it may be prone to underfitting and overfitting as a result of the unconstrained nature of the OLS. In order to avoid this problem, we can add a regularization factor $\lambda$ to the mean sqaured error function, thus defining a new cost function   
+
+$$
+{\displaystyle \min_{\boldsymbol{\beta}\in
+{\mathbb{R}}^{p}}}\frac{1}{n}\vert\vert \boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\vert\vert_2^2+\lambda\vert\vert \boldsymbol{\beta}\vert\vert_2^2
+$$
+
+which leads us to a new optimization problem called Ridge regression. 
 
 \subsubsection{Lasso Regression}
 
