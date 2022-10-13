@@ -1,0 +1,426 @@
+\documentclass[a4paper, 10pt]{article}
+\usepackage[pdftex]{graphicx}
+\usepackage{fullpage}
+\usepackage{longtable}
+\usepackage{lipsum}
+\usepackage{amssymb}
+\usepackage[utf8]{inputenc}
+\usepackage{dsfont}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{geometry}
+\usepackage{enumerate}
+\usepackage{sidecap}
+\usepackage{mdframed}
+\usepackage{tabularx}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{siunitx}
+\usepackage{array}
+\usepackage{capt-of}
+\usepackage{booktabs}
+\usepackage{savetrees}
+\usepackage{xspace}
+\usepackage{titlesec}
+\usepackage{blindtext}
+\graphicspath{/home/gregz9/Files/MachineLearning/Applied_Data_Analysis_and_Machine_Learning/Report_figures/}
+\sloppy
+
+\setlength{\parskip}{1em}
+
+\title{\Large Linear Regression and Resampling Methods \\	
+		 \normalsize Project 1 FYS-STK4155}
+	
+\author{Grzegorz Dariusz Kajda}
+
+\newcounter{rowno}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+	The following paper presents research conducted for the methods of Linear Regression, resampling techniques used for assesment of the models, and their application to real terrain data. The study of the regression methods starts with the application of Ordinary Lest Squares regression to a dataset consisting of polynomials of x and y, and fitting of said polynomials to Franke function. We measure models performance through the use of MSE and R2-score, and then evaluate it further using resampling techniques known as bootstrapping and kfold cross-validation. After finishing the evaulation of OLS, we repeat this process for Ridge and Lasso regressions, and compare the results of each model against each other. The evaluation process shows that Ridge regression clearly fits the data best, with OLS falling only slightly behind, while Lasso regression turns out to be computationally expensise.
+By the end of this project we also test the models using topograhic data. Unsuprisingly, Ridge regresison delivers the best performance out of all the models, with OLS coming in a close second position. The Lasso regression pn the other hand struggles to achieve comparable results, and takes considerably longer time predicting than the two other regression models.       
+\end{abstract}
+\linespread{2.5}
+\tableofcontents
+
+\linespread{2.5}
+\section{Introduction}
+In a world experiencing an abundance of data never seen before, the wish of predicting the unkown has never been stronger. While the ability to predict unseen data is a nontrivial task, it most certainly is possible, and with the use of adequate tools, one may take advantage of the underlaying patterns that much of the data surrounding us displays. Today, one of the most commonly used methods for uncovering relationships between variables is machine learning, a filed within artificial intelligence which has made astounishing progress in the field of learning from data since 2011. And although there still exist problems that machine algorithms may struggle with, we shall prove that for many tasks, simple methods such as regression analysis will suffice.  
+
+In this research paper we will hence study three various methods of Linear regression known as the Ordinary Least Squares regression, Ridge regression and Lasso regression, and how this methods can be used to model relationships between variables. Our resarch will begin with the generetion of a small, noisy dataset, which will be fed to our models to fit a weighted sum of polynomials upto n-th order to the Franke Function. We will then measure the performance of our algorithms by computing the mean squared error (MSE) and R2-score, before we proceed with the application of resampling techniques called bootsrap and kFold cross valtidation to our models. The former enables the decomposition of the models error into bias, variance and noice, while the latter can be used for the estimation of the test error associated with a given method of statistical learning. Lastly, when our models have been evaluated using synthetic data, we will repeat this procedure to model topograhic data.  
+
+Following the introduction, the report introduces the fundamental mathematical theory and methods used, results obtained from running the algorithms, and a discussion about the perforamnce of the models presented in this research.   
+\linespread{2.5}
+
+\section{Theory}
+
+\subsection{Linear models}
+As mentioned in the introduction, the aim of this project is to study methods of Linear regression, which are one of the best tools for building predictive models when we have measured data. Now, Linear regression can be described as a statistical approach to the explanation of a dependant variable \textbf{z} in terms of at least one independent, predictor variable \textbf{x}. This allows us to model a measured respone \textbf{z} as a function of a set of k variables \textbf{x} = \emph{$(x_0, x_1, x_2, ... , x_{k-1})^T$}: 
+
+\begin{gather*}
+	\textbf{z} = f(\textbf{x}) + \epsilon
+\end{gather*}
+
+Here $\epsilon$ is the error of our approximation that we wish to minimize for all data points. Now if no prior knowlegde in the form of a functional relationship is available to us, we assume the existance of a linear relationship between variables \textbf{z} and \textbf{x}, which gives rise to the analytical equations of linear regression allowing us to write the expression above as
+
+\begin{gather*}
+	\textbf{z} = \tilde{\textbf{z}} + \epsilon
+\end{gather*}
+
+where \textbf{$\tilde{z}$} describes the product of the k features \textbf{x} and k regression parameters $\beta = (\beta_0, \beta_1, \beta_2, ... , \beta_{k-1})$, $\textbf{$\tilde{z}$} = \textbf{x}\beta$, and is known as our prediction. The $\beta$ parameters are the unknown variables that we wish find through solving the equation of linear regression.  Now expanding will often find ourselves in situations where we want to approximate a set of n such response variables, $\textbf{z} = (z_0, z_1, z_2, ... , z_{n-1})$. One of the most common solutions to this problem is to parametrize our linear equation in terms of a polynomial function of n-1 degree: 
+
+
+\begin{gather*}
+	\textbf{z} = f(\textbf{x}) + \epsilon = \tilde{\textbf{z}} + \epsilon = \sum_{j=0}^{n-1} \beta_j x_{i}^j + \epsilon_i 
+\end{gather*}
+
+which as you shall see, is the approach used throughout this project. With a little linear algebra, we can stack all the feature vectors $\textbf{x}$ on top of each other to form a \emph{design matrix}
+
+
+$$
+\boldsymbol{X}=
+\begin{bmatrix} 
+1& x_{0}^1 &x_{0}^2& \dots & \dots &x_{0}^{k-1}\\
+1& x_{1}^1 &x_{1}^2& \dots & \dots &x_{1}^{k-1}\\
+1& x_{2}^1 &x_{2}^2& \dots & \dots &x_{2}^{k-1}\\                      
+\dots& \dots &\dots& \dots & \dots &\dots\\
+1& x_{n-1}^1 &x_{n-1}^2& \dots & \dots &x_{n-1}^{k-1}\\
+\end{bmatrix}
+$$
+
+also known as the \emph{Vandermonde matrix}. Using the design matrix, and the set of k regression parameters \textbf{$\beta$}, our set of linear regression equations can be rewritten as
+ 
+\begin{gather*}
+	\tilde{y} = \textbf{X}\beta + \epsilon
+\end{gather*}
+
+With a model of general linear regression defined, and our goal of minimizing the error of the models approximation, we can now move on to the Least Squares regression. 
+
+\subsubsection{Ordinary Least Squares}
+In Ordinary Least Squared regression, we approach the task of finding the optimal parameters $\beta$ for our model defined in the section above, by defining a cost function describing the average squared difference between our predicted values \textbf{$\tilde{z}$} and the actual values \textbf{z}, namely: 
+
+$$
+C(\boldsymbol{\beta})=\frac{1}{n}\sum_{i=0}^{n-1}\left(y_i-\tilde{y}_i\right)^2=\frac{1}{n}\left\{\left(\boldsymbol{y}-\boldsymbol{\tilde{y}}\right)^T\left(\boldsymbol{y}-\boldsymbol{\tilde{y}}\right)\right\},
+$$
+
+which we rewrite to a more compact form with the use of the design matrix \textbf{X}
+
+$$
+C(\boldsymbol{\beta})=\frac{1}{n}\left\{\left(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\right)^T\left(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\right)\right\}.
+$$
+
+Now, in order to compute the optimal parameters $\beta$, we are going to minimize the cost function by differentiating it with respect to the parameters $\beta$, and setting the resulting equation equal to zero. In other words, we will minimize the distance between the predicted data points, and the target values by solving the following problem
+
+$$
+\frac{\partial C(\boldsymbol{\beta})}{\partial \boldsymbol{\beta}} = 0
+$$
+
+Which results in
+
+$$
+\frac{\partial C(\boldsymbol{\beta})}{\partial \boldsymbol{\beta}} = 0 = \boldsymbol{X}^T\left( \boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\right).
+$$
+
+By applying the rules of matrix mutliplication, we can rewrite the resulting expression as follows
+
+$$
+\boldsymbol{X}^T\boldsymbol{y} = \boldsymbol{X}^T\boldsymbol{X}\boldsymbol{\beta},
+$$
+
+In the simple case where the matrix $X^TX$ is invertible, we can simply solve this equation by multiplying both sides from the left with the inverse of this matrix, $(X^TX)^{-1}$, giving us
+
+$$
+\boldsymbol{\beta_{optimal}} =\left(\boldsymbol{X}^T\boldsymbol{X}\right)^{-1}\boldsymbol{X}^T\boldsymbol{y}.
+$$
+
+This means that we can now compute the prediction of our model as simply as
+
+$$
+\boldsymbol{\tilde{z}} = \boldsymbol{X} \boldsymbol{\beta_{optimal}}
+$$
+
+The size of our design matrix defined as $\boldsymbol{X}\in {\mathbb{R}}^{k\times n}$ may possibly be quite large in situations where the number of predictors per response variable is a lot smaller than the number of response variables $(k \ll n)$. Although it may seem like a heavy computation to perform, the fact that $\boldsymbol{X^TX}$ is invertible assures a low-dimensional product matrix of dimension \emph{k} x \emph{k}, hence allowing for a efficient calculation process. 
+
+\subsubsection{Ridge Regression}
+In the solution for the optimal parameters for the least squares we propesed the cost function called mean sqaured error, which we then used to transform the regression problem to a optimization problem by minimizing the value of the cost function 
+
+$$
+{\displaystyle \min_{\boldsymbol{\beta}\in
+{\mathbb{R}}^{p}}}\frac{1}{n}\vert\vert \boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\vert\vert_2^2,
+$$
+
+where we used the definition of the \emph{Euclidean $L^2$-norm}
+
+$$
+\vert\vert \boldsymbol{x}\vert\vert_2 = \sqrt{\sum_i x_i^2}.
+$$
+
+
+While this approach proves to be quite efficient when applied to many problems, it may be prone to underfitting and overfitting as a result of the unconstrained nature of the OLS. In order to avoid this problem, we can add a regularization factor $\lambda$ to the mean sqaured error function, shrinking the regression coefficeients $\beta$ and thus defining a new cost function   
+
+$$
+{\displaystyle C(\boldsymbol{X},\boldsymbol{\beta})=\frac{1}{n}\vert\vert \boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\vert\vert_2^2+\lambda\vert\vert \boldsymbol{\beta}\vert\vert_2^2}
+$$
+
+Rewritting the function terms of matrix-vector notation and removing $1/n$ yields a more familiar expression 
+
+$$
+C(\boldsymbol{X},\boldsymbol{\beta})=\left\{(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})\right\}+\lambda\boldsymbol{\beta}^T\boldsymbol{\beta},
+$$
+
+This newly defined cost function gives rise to a new optimization problem called Ridge regression, where $\lambda > 0$ represents a tunable penalty quantifying the amount of shrinkage we want to impose on the regression parameters (setting $\lambda$ equal to zero gives us the standard OLS) . Solving the problem by again differentiating the cost funtion with respect to parameters $\boldsymbol{\beta}$ produces a slightly altered expression, which for finite values of the  parameter $\lambda$ ensures that our matrix will be non-singular. Now analytically solving the inversion problem, we aquire the optimal parameters through the equation given below 
+
+
+$$
+\hat{\boldsymbol{\beta}}_{\mathrm{Ridge}} = \left(\boldsymbol{X}^T\boldsymbol{X}+\lambda\boldsymbol{I}\right)^{-1}\boldsymbol{X}^T\boldsymbol{y},
+$$
+
+
+\subsubsection{Lasso Regression}
+Another method of dealing with overfitting tendency of the least sqaures regression, is the application of the \emph{Least Absolute Shrinkage and Selection Operator}, simply known as \emph{Lasso Regression}. This method too introduces a tunable penalty factor $\lambda$, which when added to the mean sqaured error, produces a cost function similiar to that of Ridge regression 
+
+$$
+C(\boldsymbol{X},\boldsymbol{\beta})=\left\{(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})\right\}+\lambda\vert\vert\boldsymbol{\beta}\vert\vert_1,
+$$
+
+where the $\vert\vert\boldsymbol{\beta}\vert\vert_1$ is a norm-1 parameter defined as
+
+$$
+\vert\vert \boldsymbol{x}\vert\vert_1 = \sum_i \vert x_i\vert.
+$$
+
+The key difference between Ridge and Lasso stems from the different L-norms used with the $\lambda$.parameter, which for Lasso regression lead to the cost function not being differentiable everywhere. There are two consequence of that, one being the \emph{absolute shrinkage} of many components contained within the vector of $\boldsymbol{\beta}$-parameters, which simply put means that many of the regression ceofficients are set to zero (Ridge regression shrinks, but does not set parameters equal to zero). Hence, Lasso is said to encourage simple sparse models with fewer parameters. Now the other consequence can be visualized through the derivation of the cost function with respect to $\beta$ 
+
+$$
+\frac{\partial C(\boldsymbol{X},\boldsymbol{\beta})}{\partial \boldsymbol{\beta}}=-2\boldsymbol{X}^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})+\lambda sgn(\boldsymbol{\beta})=0,
+$$
+
+where $sgn(\boldsymbol{\beta})$ is the derivative of the $L_1-norm$, with value equal to $-1$ for $\beta < 0$ and 1 for $\beta > 0$. Reordering of the solution for the derivative of the cost function yields the following expression 
+
+$$
+\boldsymbol{X}^T\boldsymbol{X}\boldsymbol{\beta}+\lambda sgn(\boldsymbol{\beta})=2\boldsymbol{X}^T\boldsymbol{y}.
+$$
+
+which does not have any closed form solution. There are however other methods such as convex optimization, which employs the subgradient method, an iterative algorithm used for minimizing convex, nondifferentiable functions such as Lasso. However, due to the difficulty associated with the implementation of these methods, we are going to use a version of Lasso regression built into the Scikit-Learn library.
+
+\subsection{Singular Value Decomposition}
+Before we continue, we give a brief introduction to the well-known \emph{Singular Value Decomposition} algorithm also known as the SVD. When working with both OLS and Ridge regression, we may sometimes run into the problem where the matrix $X^TX$ is non-invertible. In such situations, we can use the SVD to decompose the matrix $\boldsymbol{X}$ with dimensions \emph{m} x \emph{n} in terms of a diagonal matrix $\boldsymbol{\Sigma}$ of dimensionality \emph{m} x \emph{x} (holding the singular-values of $\boldsymbol{X}$) and two orthogonal matrices $\boldsymbol{U}$ and $\boldsymbol{V}$ of with dimensions \emph{m} x \emph{x} and \emph{n} x \emph{n} respectively: 
+
+$$
+\boldsymbol{X} = \boldsymbol{U}\boldsymbol{\Sigma}\boldsymbol{V}^T
+$$
+
+This allows us to find the solution for both OLS and Ridge regression when our design matrix is near-singular or singular (a problem often arising when $\boldsymbol{X}$ is high dimensional). We can even use the \emph{Economy-SVD} to speed up our calculations by contructing a pseudoinverse matrix A. This is done by removing all the singular-values equal to zero along the leading diagonal of matrix $\boldsymbol{\Sigma}$, and columns and rows from matrices $\boldsymbol{U}$ and $\boldsymbol{V}$ which these singular-values correspond to. Going back to the case when $X^TX$ is singular, we can rewriting it like this using the SVD
+
+$$
+\boldsymbol{X}^T\boldsymbol{X}=\boldsymbol{V}\boldsymbol{\Sigma}^T\boldsymbol{U}^T\boldsymbol{U}\boldsymbol{\Sigma}\boldsymbol{V}^T,
+$$
+
+and using the fact that $\boldsymbol{U}$ is orthonormal, shorten this expression to 
+
+$$
+\boldsymbol{X}^T\boldsymbol{X}=\boldsymbol{V}\boldsymbol{\Sigma}^T\boldsymbol{\Sigma}\boldsymbol{V}^T.
+$$
+
+We now proceed by inserting this decomposition of matrix $X^TX$ into the expression giving optimal regression parameters for OLS, and using SVD on the remaining matrices: 
+
+$$
+\hat{\boldsymbol{\beta}} = \left(\boldsymbol{X}^T\boldsymbol{X}\right)^{-1}\boldsymbol{X}^T\boldsymbol{y}.
+$$
+
+$$
+\hat{\boldsymbol{\beta}} = \boldsymbol{U}\boldsymbol{\Sigma}\boldsymbol{V}^T\left(\boldsymbol{V}\tilde{\boldsymbol{\Sigma}}^{2}(\boldsymbol{V}^T\right)^{-1}\boldsymbol{V}\boldsymbol{\Sigma}^T\boldsymbol{U}^T\boldsymbol{y},
+$$
+
+Given the orthogonality of $\boldsymbol{U}$ and $\boldsymbol{V}$, we can shorten down this expression to yield the following equation: 
+
+$$
+\hat{\boldsymbol{\beta}}=\boldsymbol{U}\boldsymbol{U}^T\boldsymbol{y}=\sum_{i=0}^{p-1}\boldsymbol{u}_i\boldsymbol{u}^T_i\boldsymbol{y},
+$$
+
+Using the decomposition of $X^TX$, we can rewrite the solution for Ridge regression in a similiar manner:
+
+$$
+\hat{\boldsymbol{\beta}}_{\mathrm{Ridge}}=\boldsymbol{X}\boldsymbol{\beta}_{\mathrm{Ridge}} = \boldsymbol{U\Sigma V^T}\left(\boldsymbol{V}\boldsymbol{\Sigma}^2\boldsymbol{V}^T+\lambda\boldsymbol{I} \right)^{-1}(\boldsymbol{U\Sigma V^T})^T\boldsymbol{y}=\sum_{j=0}^{p-1}\boldsymbol{u}_j\boldsymbol{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\boldsymbol{y},
+$$
+
+\subsection{Metrics for measurement of performance}
+As we happaned to mention in the introduction, our main metrics of models performance will be the mean sqaured error and R2-score. We are going to use the MSE to compute the error of each of the models
+
+$$
+MSE(\hat{y},\hat{\tilde{y}}) = \frac{1}{n}
+\sum_{i=0}^{n-1}(y_i-\tilde{y}_i)^2,
+$$
+
+and use the R2-score function to provide us with the measure of how well our predictions approximate to real data. The R2-score can is given by the following function 
+
+$$
+R^2(\hat{y}, \tilde{\hat{y}}) = 1 - \frac{\sum_{i=0}^{n - 1} (y_i - \tilde{y}_i)^2}{\sum_{i=0}^{n - 1} (y_i - \bar{y})^2},
+$$
+
+and returns values ranging from 0 to 1, with $R^2=1$ indicating that the model always predicts the response variable, and $R^2=0$ representing a contant model always predicting the expected value of \textbf{y}
+
+\subsection{Resampling techniques}
+To further evaluate our models, and gain deeper insight into their behaviour, we will subject our models to resampling techniques. The idea behind the techniques is to repeatedly draw samples from a training set and refit the model for each sample to uncover additional information about the fitted model. While resampling techniques are brilliant methods for gaining insight about our models behaviour, they suffer one major flaw, namely that they can be computationally expensive. This is a consequence of fitting the same model multiple times using different subsets of the training data, especially when large numbers of samples are involved. However,due to recent advancements in technology, these methods should in general prove to be not prohibitive. 
+
+\subsubsection{The Bootstrap}
+Bootstraping is a non-parametric apporach to statistical inference involving the resampling of our tranining data through the drawing of n samples from it, calculating the $\beta$-parameters and evaluating the model for the data consisting of said n samples. In this project we draw k=n (n being the size of the training set) samples with replacement, meaning that an instance can occur in the sampled dataset more than once. This process is then repeated m times.
+
+The bootstrap is particularly useful, as it allows us to decompose the error function in terms of the variance of the model itself, the mean value of the model (bias term) and the variance of the noise. This allows us to analyze the model in the light of the bias-variance tradeoff, which describes the tension between the complexity of the model and the amount of data need to train it. What do we mean by the variance and bias of the model? The variance desribes the amount the model changes by when using different samples of the training data. Bias on the other hand describes an event occuring when the the model systematically predicts the wrong variable (the model skews the result of the prediction). A golden rule for choosing a model of appropriate complexity, is to fina a balancepoint where these values equal one another, as this indicates the that the lowest possible value of error has been achieved. 
+
+As part of the discussion, we are also going to prove that the error of the model can med written as a sum of $\boldsymbol{bias}^2$, variance, and the irreducible error of the model, also defined as the variance of the noise. Now consider a dataset \textbf{\emph{L}} consisting of data \textbf{\emph{$X_L$}} = {(\emph{$y_j$}, \textbf{$x_j$}, $j=0 ... n-1$)}, we assume that the true data is generated from a noisy model 
+
+$$
+\boldsymbol{y} = f(x) + \epsilon
+$$
+
+Here $\epsilon$ is the normally distributed error with mean zero and standard deviation $\sigma^2$. As in the theory section on Linear models, we define an approximation of the function \emph{f} in terms of the parameters $\boldsymbol{\beta}$ and the design matrix $\boldsymbol{X}$, that is $\boldsymbol{\tilde{y}} = \boldsymbol{X}\boldsymbol{\beta}$. Given that the parameters $\beta$ are optimized through the use of the mean sqaured error 
+
+$$
+C(\boldsymbol{X},\boldsymbol{\beta}) =\frac{1}{n}\sum_{i=0}^{n-1}(y_i-\tilde{y}_i)^2=\mathbb{E}\left[(\boldsymbol{y}-\boldsymbol{\tilde{y}})^2\right].
+$$
+
+Here the expected value $\mathbb{E}$ is the sample value. We start off by rewriting the expression for the cost function to better fit our proof
+
+$$
+\mathbb{E}\left[(\boldsymbol{y}-\boldsymbol{\tilde{y}})^2\right]=\mathbb{E}\left[(\boldsymbol{f}+\boldsymbol{\epsilon}-\boldsymbol{\tilde{y}})^2\right],
+$$
+
+Expanding out the sqaures of this expression gives us the following equation: 
+
+$$
+\mathbb{E}\left[(\boldsymbol{f}+\boldsymbol{\epsilon}-\boldsymbol{\tilde{y}})^2\right] = \mathbb{E}\left[(\boldsymbol{f}-\boldsymbol{\tilde{y}})^2\right] + \mathbb{E}[\boldsymbol{\epsilon^2}] + 2\mathbb{E}[(\boldsymbol{f} - \boldsymbol{\tilde{y}}) \epsilon]  
+$$
+
+As we know, the mean value of the error is zero, which means that by definition the expectation value of the error is also equal to zero. We can therefore set the last term on the RHS of hte equation above equal to zero, while the middle term can be written as $\boldsymbol{\sigma^2}$ due to it being the expaction value of the error of noise. 
+
+$$
+\mathbb{E}\left[(\boldsymbol{f}-\boldsymbol{\tilde{y}})^2\right] + \mathbb{E}[\boldsymbol{\epsilon^2}] + \mathbb{E}[(\boldsymbol{f} - \boldsymbol{\tilde{y}}) \epsilon] = \mathbb{E}\left[(\boldsymbol{f}-\boldsymbol{\tilde{y}})^2\right] + \boldsymbol{\sigma^2} 
+$$
+
+If we now subtract and add $\mathbb{E}[\boldsymbol{\tilde{y}}]$ to the equation above, we will get 
+
+\begin{gather*}
+\mathbb{E}\left[(\boldsymbol{y}-\boldsymbol{\tilde{y}})^2\right]=\mathbb{E}\left[(\boldsymbol{f}+\boldsymbol{\epsilon}-\boldsymbol{\tilde{y}}+\mathbb{E}\left[\boldsymbol{\tilde{y}}\right]-\mathbb{E}\left[\boldsymbol{\tilde{y}}\right])^2\right] + \boldsymbol{\sigma^2}
+\end{gather*}
+
+$$
+ = 
+\mathbb{E}[(\boldsymbol{f}-\boldsymbol{\tilde{y}} +\mathbb{E}[\boldsymbol{\tilde{y}}]-\mathbb{E}[\boldsymbol{\tilde{y}}])^2] + \boldsymbol{\sigma^2} = \mathbb{E}[((\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}]) + (\boldsymbol{\tilde{y}} - \mathbb{E}[\boldsymbol{\tilde{y}}])^2]  + \boldsymbol{\sigma^2}
+$$
+
+$$
+= \mathbb{E}[(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}])^2] + \mathbb{E}[(\boldsymbol{\tilde{y}} - (\mathbb{E}[\boldsymbol{\tilde{y}}])^2] + 2\mathbb{E}[(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}])(\boldsymbol{\tilde{y}} - (\mathbb{E}[\boldsymbol{\tilde{y}}])] + \boldsymbol{\sigma^2}
+$$
+
+
+$$
+ = \boldsymbol{bias^2} + \boldsymbol{variance} + 2(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}])\mathbb{E}[(\boldsymbol{\tilde{y}} - (\mathbb{E}[\boldsymbol{\tilde{y}}])] + \boldsymbol{\sigma^2}
+$$
+
+$$
+\boldsymbol{bias^2} + \boldsymbol{variance} + 2(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}]) \mathbb{E}[(\boldsymbol{\tilde{y}} - \mathbb{E}[\boldsymbol{\tilde{y}}])]  + \boldsymbol{\sigma^2}
+$$
+
+$$
+\boldsymbol{bias^2} + \boldsymbol{variance} + 2(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}])(\mathbb{E}[\boldsymbol{\tilde{y}}] - \mathbb{E}[\boldsymbol{\tilde{y}}] ) + \boldsymbol{\sigma^2} = \boldsymbol{bias^2} + \boldsymbol{variance} + \boldsymbol{\sigma^2} 
+$$
+
+\subsubsection{kFold cross-validation}
+Kfold cross-validation is another resampling technique we will use to evaluate the performance of the model, however this time with the focus on how to split our data into training and test datasets. This method works on the bais of splitting the training data into k more or less equally sized mutually exclusive datasets. We are going to split the out dat for varying values of k, and begin by deciding which of the groups will play the role of a test set. We will the proceed by using the remaining groups in the training set. We will then fit our model and evaluate it on the chosen test set. This process will be repeated until each of the groups has been used as a test set, and ensures a balanced representation of each sample in both the training and the test set over the splits. 
+
+\subsection{The Datasets}
+In order to test our models and the statistical tools of resampling, we generate a polynomial function \emph{f(x,y)} an \textbf{x} and \textbf{y} dependence on the form $[x, y, x^2, y^2, xy, \dots]$ and try to fit it to the well known Franke function, which is a weighted sum of four exponential reading as follows
+
+
+$$
+\begin{align*}
+f(x,y) &= \frac{3}{4}\exp{\left(-\frac{(9x-2)^2}{4} - \frac{(9y-2)^2}{4}\right)}+\frac{3}{4}\exp{\left(-\frac{(9x+1)^2}{49}- \frac{(9y+1)}{10}\right)} \\
+&+\frac{1}{2}\exp{\left(-\frac{(9x-7)^2}{4} - \frac{(9y-3)^2}{4}\right)} -\frac{1}{5}\exp{\left(-(9x-4)^2 - (9y-7)^2\right) }.
+\end{align*}
+$$
+
+After testing our model on the Franke function, we will proceed by reading a \textbf{GeoTIF} file containing geographic information a given terrain in Norway. After succesfully extracting the data, again generate a set of polynomials which we will use to model the topograhic data and compare the models against each other
+
+\subsection{Preprocessing of Data}
+Thorughout this project we are going to scale training data using the method of zero centering, while simultaneously removing the intercept from the fitting process, and adding it back again when we perform our predictions. The removal of intercept from the fitting process is rooted in the assumption that the expected outputs of the models are not zero when all the predictors are zero. Thus, it may be a bad idea to implement a model which penelizes the intercept
+
+
+\section{Results}
+
+
+
+\section{Conclussion and discussion of results}
+
+
+\section{Appendix A - Analytical Solution of OLS}
+Now let us assume that there exists a continous function \emph(f(x)) with a normally distributed error $\epsilon$ ~ \emph{N(0,$\sigma^2$)} which describes our data: 
+
+\begin{gather*}
+	\textbf{ $y=f(x) + \epsilon$}
+\end{gather*}
+
+Function f(x) has been approximated through our model \textbf{$\tilde{y}$}, where we minimized the \emph{Residuals sum of squares} \textbf{$(y-\tilde{y})^2$}, where: 
+
+\begin{gather*}
+	\textbf{ $\tilde{y}=X\beta$}
+\end{gather*}
+As we know, \textbf{X} is our design matrix containing all of the independent variables \textbf{x} used to approximate \textbf{y}. We are now going to show that the expectation value of \textbf{y} for any given element \emph{i} can be written in the following way: 
+
+\begin{gather*}
+	\mathbb{E}[y] = \Sigma_{j} x_{i} \beta_{j} = X_i,* \beta 
+\end{gather*}
+
+Let us start the proof with the element by rewriting the expactation value of \textbf{y}:
+
+\begin{gather*}
+	\mathbb{E}[y] = (1/n)*\Sigma_{j} y_{i} = (1/n)*\Sigma_{i=0} (f(x_i) + \epsilon_i) 
+\end{gather*}
+
+Now we see that in order to prove out that $\mathbb{E}[y]$ is equal to the product $X_{i,*}\beta$, we need to prove that the value of $\epsilon_{i} = 0$. We can easily do it by finding the first derivative of the cost functions MSE: 
+
+\begin{gather*}
+	\frac{\partial C(\beta)}{\partial \beta} = 0
+\end{gather*}
+
+As you can see, we set the derivative equal to zero in order to find the optimal parameters that will minimize our error. 
+
+\begin{gather*}
+	X^T(y-X\beta) = X^Ty - X^TX = 0
+\end{gather*}
+
+Now if this matrix $X^TX$ is invertible, which it is only if X is orthonormal, then with little algebra, we have the following solution for the optimal parameters: 
+
+\begin{gather*}
+	\beta = (X^TX)^{-1}X^Ty
+\end{gather*}
+
+Now in the situation where $X^TX$ is invertible, the error which we try to minimize will be equal to zero: 
+
+\begin{gather*}
+	\epsilon = y - \tilde{y} = y - X(X^TX)^{-1}X^Ty = y - y = 0 
+\end{gather*}
+
+If you pay attention however, we could've from the start assumed that the value of $\epsilon=0$, and written the proof in the following way: 
+
+\begin{gather*}
+	\mathbb{E}[y_i] = \mathbb{E}[X_i,*+beta] + \mathbb{E}[\epsilon_i] \\
+						= X_i,*beta + 0 = \mathbb{E}[y] = X_i,*beta
+\end{gather*}
+
+This is simply caused by $\mathbb{E}[\epsilon_i]$ being by definition equal to zero, as it can be interpreted as the mean value of the error. Since the the mean value of the distribution of $\epsilon$ is equal to zero, we can write $\epsilon_i=0$. Now the next thing we are going to prove, is that the variance of $y_i$ is equal to $\sigma^2$. From the lecture notes and \emph{Pattern Recognition and Machine Learning by Christopher M. Bishop}, we know that the equation giving us variance, can be written in terms of a expectation value: 
+
+\begin{gather*}
+			Var(y_i) = \mathbb{E}[y_i - \mathbb{E}[y_i]] = \mathbb{E}[y_i^2] - (\mathbb{E}[y_i])^2 \\
+										= \mathbb{E}[(X_i,*\beta + \epsilon_i)^2] - (X_i,*\beta)^2 \\
+										= \mathbb{E}[(X_i,*\beta)^2 + 2\epsilon_iX_i,*\beta + \epsilon_i^2] - (X_i,*\beta)^2
+										= (X_i,*\beta)^2 + 2\mathbb{E}
+\end{gather*}
+
+\end{document}
+
+
