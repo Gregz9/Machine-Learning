@@ -216,19 +216,77 @@ $$
 \boldsymbol{X} = \boldsymbol{U}\boldsymbol{\Sigma}\boldsymbol{V}^T
 $$
 
-This allows us to find the solution for both OLS and Ridge regression when our design matrix is near-singular or singular (a problem often arising when $\boldsymbol{X}$ is high dimensional). We can even use the \emph{Economy-SVD} to speed up our calculations by contructing a pseudoinverse matrix A. This is done by removing all the singular-values equal to zero along the leading diagonal of matrix $\boldsymbol{\Sigma}$. 
+This allows us to find the solution for both OLS and Ridge regression when our design matrix is near-singular or singular (a problem often arising when $\boldsymbol{X}$ is high dimensional). We can even use the \emph{Economy-SVD} to speed up our calculations by contructing a pseudoinverse matrix A. This is done by removing all the singular-values equal to zero along the leading diagonal of matrix $\boldsymbol{\Sigma}$, and columns and rows from matrices $\boldsymbol{U}$ and $\boldsymbol{V}$ which these singular-values correspond to. Going back to the case when $X^TX$ is singular, we can rewriting it like this using the SVD
 
+$$
+\boldsymbol{X}^T\boldsymbol{X}=\boldsymbol{V}\boldsymbol{\Sigma}^T\boldsymbol{U}^T\boldsymbol{U}\boldsymbol{\Sigma}\boldsymbol{V}^T,
+$$
 
-\subsection{The Data}
+and using the fact that $\boldsymbol{U}$ is orthonormal, shorten this expression to 
 
-\subsection{Preprocessing of Data}
+$$
+\boldsymbol{X}^T\boldsymbol{X}=\boldsymbol{V}\boldsymbol{\Sigma}^T\boldsymbol{\Sigma}\boldsymbol{V}^T.
+$$
+
+We now proceed by inserting this decomposition of matrix $X^TX$ into the expression giving optimal regression parameters for OLS, and using SVD on the remaining matrices: 
+
+$$
+\hat{\boldsymbol{\beta}} = \left(\boldsymbol{X}^T\boldsymbol{X}\right)^{-1}\boldsymbol{X}^T\boldsymbol{y}.
+$$
+
+$$
+\hat{\boldsymbol{\beta}} = \boldsymbol{U}\boldsymbol{\Sigma}\boldsymbol{V}^T\left(\boldsymbol{V}\tilde{\boldsymbol{\Sigma}}^{2}(\boldsymbol{V}^T\right)^{-1}\boldsymbol{V}\boldsymbol{\Sigma}^T\boldsymbol{U}^T\boldsymbol{y},
+$$
+
+Given the orthogonality of $\boldsymbol{U}$ and $\boldsymbol{V}$, we can shorten down this expression to yield the following equation: 
+
+$$
+\hat{\boldsymbol{\beta}}=\boldsymbol{U}\boldsymbol{U}^T\boldsymbol{y}=\sum_{i=0}^{p-1}\boldsymbol{u}_i\boldsymbol{u}^T_i\boldsymbol{y},
+$$
+
+Using the decomposition of $X^TX$, we can rewrite the solution for Ridge regression in a similiar manner:
+
+$$
+\hat{\boldsymbol{\beta}}_{\mathrm{Ridge}}=\boldsymbol{X}\boldsymbol{\beta}_{\mathrm{Ridge}} = \boldsymbol{U\Sigma V^T}\left(\boldsymbol{V}\boldsymbol{\Sigma}^2\boldsymbol{V}^T+\lambda\boldsymbol{I} \right)^{-1}(\boldsymbol{U\Sigma V^T})^T\boldsymbol{y}=\sum_{j=0}^{p-1}\boldsymbol{u}_j\boldsymbol{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\boldsymbol{y},
+$$
 
 \subsection{Metrics for measurement of performance}
+As we happaned to mention in the introduction, our main metrics of models performance will be the mean sqaured error and R2-score. We are going to use the MSE to compute the error of each of the models
+
+$$
+MSE(\hat{y},\hat{\tilde{y}}) = \frac{1}{n}
+\sum_{i=0}^{n-1}(y_i-\tilde{y}_i)^2,
+$$
+
+and use the R2-score function to provide us with the measure of how well our predictions approximate to real data. The R2-score can is given by the following function 
+
+$$
+R^2(\hat{y}, \tilde{\hat{y}}) = 1 - \frac{\sum_{i=0}^{n - 1} (y_i - \tilde{y}_i)^2}{\sum_{i=0}^{n - 1} (y_i - \bar{y})^2},
+$$
+
+and returns values ranging from 0 to 1, with $R^2=1$ indicating that the model always predicts the response variable, and $R^2=0$ representing a contant model always predicting the expected value of \textbf{y}
 
 \subsection{Resampling techniques}
+To further evaluate our models, and gain deeper insight into their behaviour, we will subject our models to resampling techniques. The idea behind the techniques is to repeatedly draw samples from a training set and refit the model for each sample to uncover additional information about the fitted model. While resampling techniques are brilliant methods for gaining insight about our models behaviour, they suffer one major flaw, namely that they can be computationally expensive. This is a consequence of fitting the same model multiple times using different subsets of the training data, especially when large numbers of samples are involved. However,due to recent advancements in technology, these methods should in general prove to be not prohibitive. 
 
 \subsubsection{The Bootstrap}
+Bootstraping is a non-parametric apporach to statistical inference involving the resampling of our tranining data through the drawing of n samples from it, calculating the $\beta$-parameters and evaluating the model for the data consisting of said n samples. In this project we draw k=n (n being the size of the training set) samples with replacement, meaning that an instance can occur in the sampled dataset more than once. This process is then repeated m times.
 
+The bootstrap is particularly useful, as it allows us to decompose the error function in terms of the variance of the model itself, the mean value of the model (bias term) and the variance of the noise. This allows us to analyze the model in the light of the bias-variance tradeoff, which describes the tension between the complexity of the model and the amount of data need to train it. What do we mean by the variance and bias of the model? The variance desribes the amount the model changes by when using different samples of the training data. Bias on the other hand describes an event occuring when the the model systematically predicts the wrong variable (the model skews the result of the prediction). A golden rule for choosing a model of appropriate complexity, is to fina a balancepoint where these values equal one another, as this indicates the that the lowest possible value of error has been achieved. 
+
+As part of the discussion, we are also going to prove that the error of the model can med written as a sum of $\boldsymbol{bias}^2$, variance, and the irreducible error of the model, also defined as the variance of the noise. Now consider a dataset \textbf{\emph{L}} consisting of data \textbf{\emph{$X_L$}} = {(\emph{$y_j$}, \textbf{$x_j$}, $j=0 ... n-1$)}, we assume that the true data is generated from a noisy model 
+
+$$
+\boldsymbol{y} = f(x) + \epsilon
+$$
+
+Here $\epsilon$ is the normally distributed error with mean zero and standard deviation $\sigma^2$. As in the theory section on Linear models, we define an approximation of the function \emph{f} in terms of the parameters $\boldsymbol{\beta}$ and the design matrix $\boldsymbol{X}$, that is $\boldsymbol{\tilde{y}} = \boldsymbol{X}\boldsymbol{\beta}$. Given that the parameters $\beta$ are optimized through the use 
+\subsubsection{kFold cross-validation}
+
+\subsection{The Datasets}
+As we mentioned in the section introducing theory for Linear regression, one of the simpliest approaches when fitting multiple response variables, is to parametrize our function/linear equation in terms of a polynomial 
+
+\subsection{Preprocessing of Data}
 
 \section{Results}
 
