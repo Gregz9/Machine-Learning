@@ -15,7 +15,7 @@ from Regression import Lasso_reg_boot, Lasso_reg_kFold, OLS_reg_boot, OLS_reg_kF
 
 
 def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,       
-            noisy=True, centering=True, compare=False, kfold_for_all_lam=False):
+            noisy=True, centering=True, kfold_for_all_lam=False):
 
     x,y = generate_determ_data(n_points)
     lambdas = np.logspace(-8,-2,n_lambdas)
@@ -118,4 +118,4 @@ def task_f(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
 
     # good random_seeds = [79, 227"""
 
-task_f(compare=True)
+task_f()

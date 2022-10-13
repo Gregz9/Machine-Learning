@@ -1,3 +1,4 @@
+from tkinter import W
 import numpy as np 
 from utils import generate_determ_data, find_best_lambda
 from Regression import Ridge_reg_boot, Ridge_reg_kFold, OLS_reg_kFold, OLS_reg_boot
@@ -7,7 +8,7 @@ from plot_functions import (plot_figs_bootstrap_all_lambdas, plot_kFold_figs_for
 
 
 def task_e(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,       
-            noisy=True, centering=True, compare=False, kfold_for_all_lam=False):
+            noisy=True, centering=False, compare=True, kfold_for_all_lam=False):
 
     x,y = generate_determ_data(n_points)
     lambdas = np.logspace(-12,-3,n_lambdas)
@@ -18,7 +19,7 @@ def task_e(n_points=20, n_lambdas=6, r_seed=79, n_boots=100, degrees=12,
     lam, index = find_best_lambda(lambdas, MSE_test_boot)
     
 
-    plot_figs_bootstrap_all_lambdas(MSE_train_boot, MSE_test_boot, variance_, bias_, deg, lambdas)
+    plot_figs_bootstrap_all_lambdas(MSE_train_boot, MSE_test_boot, variance_, bias_, deg, lambdas, reg_type='ridge')
     
     folds = [5,8,10] 
     MSE_train_folds_R = np.empty((len(folds), degrees))
