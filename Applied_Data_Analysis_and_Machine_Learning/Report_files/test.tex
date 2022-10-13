@@ -148,7 +148,7 @@ $$
 The size of our design matrix defined as $\boldsymbol{X}\in {\mathbb{R}}^{k\times n}$ may possibly be quite large in situations where the number of predictors per response variable is a lot smaller than the number of response variables $(k \ll n)$. Although it may seem like a heavy computation to perform, the fact that $\boldsymbol{X^TX}$ is invertible assures a low-dimensional product matrix of dimension \emph{k} x \emph{k}, hence allowing for a efficient calculation process. 
 
 \subsubsection{Ridge Regression}
-In the solution for the optimal parameters for the least squares we introduced the cost function called mean sqaured error, which we then used to transform the regression problem to a optimization problem by minimizing the value of the cost function 
+In the solution for the optimal parameters for the least squares we propesed the cost function called mean sqaured error, which we then used to transform the regression problem to a optimization problem by minimizing the value of the cost function 
 
 $$
 {\displaystyle \min_{\boldsymbol{\beta}\in
@@ -162,22 +162,66 @@ $$
 $$
 
 
-While this approach proves to be quite efficient when applied to many problems, it may be prone to underfitting and overfitting as a result of the unconstrained nature of the OLS. In order to avoid this problem, we can add a regularization factor $\lambda$ to the mean sqaured error function, thus defining a new cost function   
+While this approach proves to be quite efficient when applied to many problems, it may be prone to underfitting and overfitting as a result of the unconstrained nature of the OLS. In order to avoid this problem, we can add a regularization factor $\lambda$ to the mean sqaured error function, shrinking the regression coefficeients $\beta$ and thus defining a new cost function   
 
 $$
-{\displaystyle \min_{\boldsymbol{\beta}\in
-{\mathbb{R}}^{p}}}\frac{1}{n}\vert\vert \boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\vert\vert_2^2+\lambda\vert\vert \boldsymbol{\beta}\vert\vert_2^2
+{\displaystyle C(\boldsymbol{X},\boldsymbol{\beta})=\frac{1}{n}\vert\vert \boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\vert\vert_2^2+\lambda\vert\vert \boldsymbol{\beta}\vert\vert_2^2}
 $$
 
-which leads us to a new optimization problem called Ridge regression. 
+Rewritting the function terms of matrix-vector notation and removing $1/n$ yields a more familiar expression 
+
+$$
+C(\boldsymbol{X},\boldsymbol{\beta})=\left\{(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})\right\}+\lambda\boldsymbol{\beta}^T\boldsymbol{\beta},
+$$
+
+This newly defined cost function gives rise to a new optimization problem called Ridge regression, where $\lambda > 0$ represents a tunable penalty quantifying the amount of shrinkage we want to impose on the regression parameters (setting $\lambda$ equal to zero gives us the standard OLS) . Solving the problem by again differentiating the cost funtion with respect to parameters $\boldsymbol{\beta}$ produces a slightly altered expression, which for finite values of the  parameter $\lambda$ ensures that our matrix will be non-singular. Now analytically solving the inversion problem, we aquire the optimal parameters through the equation given below 
+
+
+$$
+\hat{\boldsymbol{\beta}}_{\mathrm{Ridge}} = \left(\boldsymbol{X}^T\boldsymbol{X}+\lambda\boldsymbol{I}\right)^{-1}\boldsymbol{X}^T\boldsymbol{y},
+$$
+
 
 \subsubsection{Lasso Regression}
+Another method of dealing with overfitting tendency of the least sqaures regression, is the application of the \emph{Least Absolute Shrinkage and Selection Operator}, simply known as \emph{Lasso Regression}. This method too introduces a tunable penalty factor $\lambda$, which when added to the mean sqaured error, produces a cost function similiar to that of Ridge regression 
+
+$$
+C(\boldsymbol{X},\boldsymbol{\beta})=\left\{(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})\right\}+\lambda\vert\vert\boldsymbol{\beta}\vert\vert_1,
+$$
+
+where the $\vert\vert\boldsymbol{\beta}\vert\vert_1$ is a norm-1 parameter defined as
+
+$$
+\vert\vert \boldsymbol{x}\vert\vert_1 = \sum_i \vert x_i\vert.
+$$
+
+The key difference between Ridge and Lasso stems from the different L-norms used with the $\lambda$.parameter, which for Lasso regression lead to the cost function not being differentiable everywhere. There are two consequence of that, one being the \emph{absolute shrinkage} of many components contained within the vector of $\boldsymbol{\beta}$-parameters, which simply put means that many of the regression ceofficients are set to zero (Ridge regression shrinks, but does not set parameters equal to zero). Hence, Lasso is said to encourage simple sparse models with fewer parameters. Now the other consequence can be visualized through the derivation of the cost function with respect to $\beta$ 
+
+$$
+\frac{\partial C(\boldsymbol{X},\boldsymbol{\beta})}{\partial \boldsymbol{\beta}}=-2\boldsymbol{X}^T(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta})+\lambda sgn(\boldsymbol{\beta})=0,
+$$
+
+where $sgn(\boldsymbol{\beta})$ is the derivative of the $L_1-norm$, with value equal to $-1$ for $\beta < 0$ and 1 for $\beta > 0$. Reordering of the solution for the derivative of the cost function yields the following expression 
+
+$$
+\boldsymbol{X}^T\boldsymbol{X}\boldsymbol{\beta}+\lambda sgn(\boldsymbol{\beta})=2\boldsymbol{X}^T\boldsymbol{y}.
+$$
+
+which does not have any closed form solution. There are however other methods such as convex optimization, which employs the subgradient method, an iterative algorithm used for minimizing convex, nondifferentiable functions such as Lasso. However, due to the difficulty associated with the implementation of these methods, we are going to use a version of Lasso regression built into the Scikit-Learn library.
+
+\subsection{Singular Value Decomposition}
+Before we continue, we give a brief introduction to the well-known \emph{Singular Value Decomposition} algorithm also known as the SVD. When working with both OLS and Ridge regression, we may sometimes run into the problem where the matrix $X^TX$ is non-invertible. In such situations, we can use the SVD to decompose the matrix $\boldsymbol{X}$ with dimensions \emph{m} x \emph{n} in terms of a diagonal matrix $\boldsymbol{\Sigma}$ of dimensionality \emph{m} x \emph{x} (holding the singular-values of $\boldsymbol{X}$) and two orthogonal matrices $\boldsymbol{U}$ and $\boldsymbol{V}$ of with dimensions \emph{m} x \emph{x} and \emph{n} x \emph{n} respectively: 
+
+$$
+\boldsymbol{X} = \boldsymbol{U}\boldsymbol{\Sigma}\boldsymbol{V}^T
+$$
+
+This allows us to find the solution for both OLS and Ridge regression when our design matrix is near-singular or singular (a problem often arising when $\boldsymbol{X}$ is high dimensional). We can even use the \emph{Economy-SVD} to speed up our calculations by contructing a pseudoinverse matrix A. This is done by removing all the singular-values equal to zero along the leading diagonal of matrix $\boldsymbol{\Sigma}$. 
+
 
 \subsection{The Data}
 
 \subsection{Preprocessing of Data}
-
-\subsection{Singular Value Decomposition - SVD}
 
 \subsection{Metrics for measurement of performance}
 
