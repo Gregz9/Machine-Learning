@@ -280,13 +280,77 @@ $$
 \boldsymbol{y} = f(x) + \epsilon
 $$
 
-Here $\epsilon$ is the normally distributed error with mean zero and standard deviation $\sigma^2$. As in the theory section on Linear models, we define an approximation of the function \emph{f} in terms of the parameters $\boldsymbol{\beta}$ and the design matrix $\boldsymbol{X}$, that is $\boldsymbol{\tilde{y}} = \boldsymbol{X}\boldsymbol{\beta}$. Given that the parameters $\beta$ are optimized through the use 
+Here $\epsilon$ is the normally distributed error with mean zero and standard deviation $\sigma^2$. As in the theory section on Linear models, we define an approximation of the function \emph{f} in terms of the parameters $\boldsymbol{\beta}$ and the design matrix $\boldsymbol{X}$, that is $\boldsymbol{\tilde{y}} = \boldsymbol{X}\boldsymbol{\beta}$. Given that the parameters $\beta$ are optimized through the use of the mean sqaured error 
+
+$$
+C(\boldsymbol{X},\boldsymbol{\beta}) =\frac{1}{n}\sum_{i=0}^{n-1}(y_i-\tilde{y}_i)^2=\mathbb{E}\left[(\boldsymbol{y}-\boldsymbol{\tilde{y}})^2\right].
+$$
+
+Here the expected value $\mathbb{E}$ is the sample value. We start off by rewriting the expression for the cost function to better fit our proof
+
+$$
+\mathbb{E}\left[(\boldsymbol{y}-\boldsymbol{\tilde{y}})^2\right]=\mathbb{E}\left[(\boldsymbol{f}+\boldsymbol{\epsilon}-\boldsymbol{\tilde{y}})^2\right],
+$$
+
+Expanding out the sqaures of this expression gives us the following equation: 
+
+$$
+\mathbb{E}\left[(\boldsymbol{f}+\boldsymbol{\epsilon}-\boldsymbol{\tilde{y}})^2\right] = \mathbb{E}\left[(\boldsymbol{f}-\boldsymbol{\tilde{y}})^2\right] + \mathbb{E}[\boldsymbol{\epsilon^2}] + 2\mathbb{E}[(\boldsymbol{f} - \boldsymbol{\tilde{y}}) \epsilon]  
+$$
+
+As we know, the mean value of the error is zero, which means that by definition the expectation value of the error is also equal to zero. We can therefore set the last term on the RHS of hte equation above equal to zero, while the middle term can be written as $\boldsymbol{\sigma^2}$ due to it being the expaction value of the error of noise. 
+
+$$
+\mathbb{E}\left[(\boldsymbol{f}-\boldsymbol{\tilde{y}})^2\right] + \mathbb{E}[\boldsymbol{\epsilon^2}] + \mathbb{E}[(\boldsymbol{f} - \boldsymbol{\tilde{y}}) \epsilon] = \mathbb{E}\left[(\boldsymbol{f}-\boldsymbol{\tilde{y}})^2\right] + \boldsymbol{\sigma^2} 
+$$
+
+If we now subtract and add $\mathbb{E}[\boldsymbol{\tilde{y}}]$ to the equation above, we will get 
+
+\begin{gather*}
+\mathbb{E}\left[(\boldsymbol{y}-\boldsymbol{\tilde{y}})^2\right]=\mathbb{E}\left[(\boldsymbol{f}+\boldsymbol{\epsilon}-\boldsymbol{\tilde{y}}+\mathbb{E}\left[\boldsymbol{\tilde{y}}\right]-\mathbb{E}\left[\boldsymbol{\tilde{y}}\right])^2\right] + \boldsymbol{\sigma^2}
+\end{gather*}
+
+$$
+ = 
+\mathbb{E}[(\boldsymbol{f}-\boldsymbol{\tilde{y}} +\mathbb{E}[\boldsymbol{\tilde{y}}]-\mathbb{E}[\boldsymbol{\tilde{y}}])^2] + \boldsymbol{\sigma^2} = \mathbb{E}[((\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}]) + (\boldsymbol{\tilde{y}} - \mathbb{E}[\boldsymbol{\tilde{y}}])^2]  + \boldsymbol{\sigma^2}
+$$
+
+$$
+= \mathbb{E}[(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}])^2] + \mathbb{E}[(\boldsymbol{\tilde{y}} - (\mathbb{E}[\boldsymbol{\tilde{y}}])^2] + 2\mathbb{E}[(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}])(\boldsymbol{\tilde{y}} - (\mathbb{E}[\boldsymbol{\tilde{y}}])] + \boldsymbol{\sigma^2}
+$$
+
+
+$$
+ = \boldsymbol{bias^2} + \boldsymbol{variance} + 2(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}])\mathbb{E}[(\boldsymbol{\tilde{y}} - (\mathbb{E}[\boldsymbol{\tilde{y}}])] + \boldsymbol{\sigma^2}
+$$
+
+$$
+\boldsymbol{bias^2} + \boldsymbol{variance} + 2(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}]) \mathbb{E}[(\boldsymbol{\tilde{y}} - \mathbb{E}[\boldsymbol{\tilde{y}}])]  + \boldsymbol{\sigma^2}
+$$
+
+$$
+\boldsymbol{bias^2} + \boldsymbol{variance} + 2(\boldsymbol{f}-\mathbb{E}[\boldsymbol{\tilde{y}}])(\mathbb{E}[\boldsymbol{\tilde{y}}] - \mathbb{E}[\boldsymbol{\tilde{y}}] ) + \boldsymbol{\sigma^2} = \boldsymbol{bias^2} + \boldsymbol{variance} + \boldsymbol{\sigma^2} 
+$$
+
 \subsubsection{kFold cross-validation}
+Kfold cross-validation is another resampling technique we will use to evaluate the performance of the model, however this time with the focus on how to split our data into training and test datasets. This method works on the bais of splitting the training data into k more or less equally sized mutually exclusive datasets. We are going to split the out dat for varying values of k, and begin by deciding which of the groups will play the role of a test set. We will the proceed by using the remaining groups in the training set. We will then fit our model and evaluate it on the chosen test set. This process will be repeated until each of the groups has been used as a test set, and ensures a balanced representation of each sample in both the training and the test set over the splits. 
 
 \subsection{The Datasets}
-As we mentioned in the section introducing theory for Linear regression, one of the simpliest approaches when fitting multiple response variables, is to parametrize our function/linear equation in terms of a polynomial 
+In order to test our models and the statistical tools of resampling, we generate a polynomial function \emph{f(x,y)} an \textbf{x} and \textbf{y} dependence on the form $[x, y, x^2, y^2, xy, \dots]$ and try to fit it to the well known Franke function, which is a weighted sum of four exponential reading as follows
+
+
+$$
+\begin{align*}
+f(x,y) &= \frac{3}{4}\exp{\left(-\frac{(9x-2)^2}{4} - \frac{(9y-2)^2}{4}\right)}+\frac{3}{4}\exp{\left(-\frac{(9x+1)^2}{49}- \frac{(9y+1)}{10}\right)} \\
+&+\frac{1}{2}\exp{\left(-\frac{(9x-7)^2}{4} - \frac{(9y-3)^2}{4}\right)} -\frac{1}{5}\exp{\left(-(9x-4)^2 - (9y-7)^2\right) }.
+\end{align*}
+$$
+
+After testing our model on the Franke function, we will proceed by reading a \textbf{GeoTIF} file containing geographic information a given terrain in Norway. After succesfully extracting the data, again generate a set of polynomials which we will use to model the topograhic data and compare the models against each other
 
 \subsection{Preprocessing of Data}
+Thorughout this project we are going to scale training data using the method of zero centering, while simultaneously removing the intercept from the fitting process, and adding it back again when we perform our predictions. The removal of intercept from the fitting process is rooted in the assumption that the expected outputs of the models are not zero when all the predictors are zero. Thus, it may be a bad idea to implement a model which penelizes the intercept
+
 
 \section{Results}
 
