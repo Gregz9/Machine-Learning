@@ -27,6 +27,8 @@
 \usepackage{blindtext}
 \sloppy
 
+\setlength{\parskip}{1em}
+
 \title{\Large Linear Regression and Resampling Methods \\	
 		 \normalsize Project 1 FYS-STK4155}
 	
@@ -38,37 +40,48 @@
 \maketitle
 
 \begin{abstract}
-	In the following project we examine the methods of Ordinary Least Squares regression, Ridge regression and Lasso regression, and their application to terrain data. The study begins with the employment of OLS to polynomials of x and y upto the fifth order, and fitting of said polynomials to Franke function. We proceed by applying resampling techniques of bootstrap and kFold cross-validation to evaluate our model of the OLS, and repeat the process for Ridge and Lasso regression afterwards. By applying bootstrap to all three models, we are able to visualize the bias-variance tradeoff, and thus study the mean squared error as a function of bias and variance. By compairing the results of each model, we find that Ridge regression gives rise to the best fit, with OLS coming in second, while Lasso struggles to converge, making it difficult to gauge its performance.
+	The following paper presents research conducted for the methods of Linear Regression, resampling techniques used for assesment of the models, and their application to real terrain data. The study of the regression methods starts with the application of Ordinary Lest Squares regression to a dataset consisting of polynomials of x and y, and fitting of said polynomials to Franke function. The models performance is then measuered through the mean squared error (MSE) function and R2-score, before being evalueated through the application of resampling techniques. Stating with bootstrap resampling, we are able to analyze the MSE in terms of a decompostion to bias and variance. We then proceed with applying kFold cross-validation to assess the models performance by dividing our data into k datasets. This process is then repeated for two other variants of regression, namely Ridge and Lasso regressions.  
 
-	Testing the models using topograhic data yeilded better results for Lasso regression, however the computational expenses associated its coordinate gradient are significant. Thus Ridge regression once again proves to produce the best fit, with the OLS falling slightly behind.      
+	The study then proceeds by applying resampling techniques of bootstrap and kFold cross-validation to evaluate our model of the OLS, and repeat the process for Ridge and Lasso regression afterwards. By applying bootstrap to all three models, we are able to visualize the bias-variance tradeoff, and thus study the mean squared error as a function of bias and variance. By compairing the results of each model, we find that Ridge regression gives rise to the best fit, with OLS coming in second, while Lasso struggles to converge, making it difficult to gauge its performance.
+
+	Testing the models using topograhic data yeilded better results for Lasso regression, however the computational expenses associated with its coordinate decenta algorithm proved to be a major limiting factor fo rits performance. Thus Ridge regression once again proves to produce the best fit, with the OLS falling slightly behind.      
 \end{abstract}
 \linespread{2.5}
 \tableofcontents
 
 \linespread{2.5}
 \section{Introduction}
-The idea of predicting the future or the unknown may seem like a fool's errand to most, escpecially in a world ever-changning at a rate never seen before. While it is true that predicting the unseen is a nontrivial task, it is certainly possible. Many of the observations we make each day display a linear relationship, or allow us to make assumptions about such relationships. With this in mind, we can prove that for task which are not too complex, we can use the technique of regression analysis.
+In a world experiencing an abundance of data never seen before, the wish of predicting the unkown has never been stronger. While the ability to predict unseen data is a nontrivial task, it most certainly is possible, and with the use of adequate tools, one may take advantage of the underlaying patterns that much of the data surrounding us displays. Today, one of the most commonly used methods for uncovering relationships between variables is machine learning, a filed within artificial intelligence which has made astounishing progress in the field of learning from data since 2011. And although there still exist problems that machine algorithms may struggle with, we shall prove that for many tasks, simple methods such as regression analysis will suffice.  
 
-Hence, we are going study three different variants of regression in this article, namely the Ordinary Least Squares regression, Ridge regression and Lasso regression. We will start by genereting a small dataset with an addition of stochastic noise to it, and use it with our models to fit polynomials upto n-th order to the Franke Function. While doing this, the models will be evalueated on the basis of the mean squared error and R2-score. Resampling techniques known as bootstrap and kFold cross-validation will also be applied in order to assess the performance of our models. When we have become familiar with the possible optimization techniques for our algorithms, we will apply our models to realterrain data.  
-For the sake of context, this article has been divided into four major parts, the first being the introduction. The section that follows will present relevant mathematical theory, while section 3 will present the results obtained during the practical part along with a discussion of the results. The article will end with a conclusion.
+In this research paper we will hence study three various methods of Linear regression known as the Ordinary Least Squares regression, Ridge regression and Lasso regression, and how this methods can be used to model relationships between variables. Our resarch will begin with the generetion of a small, noisy dataset, which will be fed to our models to fit a weighted sum of polynomials upto n-th order to the Franke Function. We will then measure the performance of our algorithms by computing the mean squared error (MSE) and R2-score, before we proceed with the application of resampling techniques called bootsrap and kFold cross valtidation to our models. The former enables the decomposition of the models error into bias, variance and noice, while the latter can be used for the estimation of the test error associated with a given method of statistical learning. Lastly, when our models have been evaluated using synthetic data, we will repeat this procedure to model topograhic data.  
+
+Following the introduction, the report introduces the fundamental mathematical theory and methods used, results obtained from running the algorithms, and a discussion about the perforamnce of the models presented in this research.   
 \linespread{2.5}
 
 \section{Theory}
 
 \subsection{Linear models}
-As mentioned in the introduction, linear regression is based on the assumption of linear relationships between observations or variables. From the statistical point of view, this means that if we're given a dependent variable y, we can explain the variable through a set of k feauteres $x = (x_0, x_1, x_2, ... x_{k-1})$. Hence, this can be mathematically stated as follows: 
+As mentioned in the introduction, the aim of this project is to study methods of Linear regression, which are one of the best tools for building predictive models when we have measured data. Now, Linear regression can be described as a statistical approach to the explanation of a dependant variable \textbf{z} in terms of at least one independent, predictor variable \textbf{x}. This allows us to model a measured respone \textbf{z} as a function of a set of k variables \textbf{x} = \emph{$(x_0, x_1, x_2, ... , x_{k-1})^T$}: 
 
 \begin{gather*}
-	\textbf{y} = f(\textbf{x}) + \epsilon
+	\textbf{z} = f(\textbf{x}) + \epsilon
 \end{gather*}
 
-This linear relationship can be rewritten in terms of a linear model, by introducing a set of coefficients $\beta = (\beta_{0}, \beta_{1}, \beta_{2}, ... , \beta_{p-1})$. This allows to transform the equation from above to the form: 
+Here $\epsilon$ is the error of our approximation that we wish to minimize for all data points. Now if no prior knowlegde in the form of a functional relationship is available to us, we assume the existance of a linear relationship between variables \textbf{z} and \textbf{x}, which gives rise to the analytical equations of linear regression allowing us to write the expression above as
 
 \begin{gather*}
-	\tilde{y} = \textbf{x}^T\beta
+	\textbf{z} = \tilde{\textbf{z}} + \epsilon
 \end{gather*}
 
-Expanding this logic to a dataset of m response variables $y = (y_0, y_1, y_2, ... , y_{m-1})$, we can rewrite this equation again, now by stacking all feature vectors on top each other to form a design matrix \textbf{X}: 
+where \textbf{$\tilde{z}$} describes the product of the k features \textbf{x} and k regression parameters $\beta = (\beta_0, \beta_1, \beta_2, ... , \beta_{k-1})$, $\textbf{$\tilde{z}$} = \textbf{x}\beta$, and is known as our prediction. The $\beta$ parameters are the unknown variables that we wish find through solving the equation of linear regression.  Now expanding will often find ourselves in situations where we want to approximate a set of n such response variables, $\textbf{z} = (z_0, z_1, z_2, ... , z_{n-1})$. One of the most common solutions to this problem is to parametrize our linear equation in terms of a polynomial function of n-1 degree: 
+
+
+\begin{gather*}
+	\textbf{z} = f(\textbf{x}) + \epsilon = \tilde{\textbf{z}} + \epsilon = \sum_{j=0}^{n-1} \beta_j x_{i}^j + \epsilon_i 
+\end{gather*}
+
+which as you shall see, is the approach used throughout this project. With a little linear algebra, we can stack all the feature vectors $\textbf{x}$ on top of each other to form a \emph{design matrix}
+
 
 $$
 \boldsymbol{X}=
@@ -77,39 +90,75 @@ $$
 1& x_{1}^1 &x_{1}^2& \dots & \dots &x_{1}^{k-1}\\
 1& x_{2}^1 &x_{2}^2& \dots & \dots &x_{2}^{k-1}\\                      
 \dots& \dots &\dots& \dots & \dots &\dots\\
-1& x_{m-1}^1 &x_{m-1}^2& \dots & \dots &x_{m-1}^{k-1}\\
+1& x_{n-1}^1 &x_{n-1}^2& \dots & \dots &x_{n-1}^{k-1}\\
 \end{bmatrix}
 $$
 
-We can now write the problem of linear regression in terms of the product of the design matrix and regression parameters $\beta$: 
+also known as the \emph{Vandermonde matrix}. Using the design matrix, and the set of k regression parameters \textbf{$\beta$}, our set of linear regression equations can be rewritten as
+ 
 \begin{gather*}
-	\tilde{y} = \textbf{X}\beta
+	\tilde{y} = \textbf{X}\beta + \epsilon
 \end{gather*}
 
-This equation can now be analytically solved for optimal values of the parameters $\beta$
+With a model of general linear regression defined, and our goal of minimizing the error of the models approximation, we can now move on to the Least Squares regression. 
+
+\subsubsection{Ordinary Least Squares}
+In Ordinary Least Squared regression, we approach the task of finding the optimal parameters $\beta$ for our model defined in the section above, by defining a cost function describing the average squared difference between our predicted values \textbf{$\tilde{z}$} and the actual values \textbf{z}, namely: 
+
+$$
+C(\boldsymbol{\beta})=\frac{1}{n}\sum_{i=0}^{n-1}\left(y_i-\tilde{y}_i\right)^2=\frac{1}{n}\left\{\left(\boldsymbol{y}-\boldsymbol{\tilde{y}}\right)^T\left(\boldsymbol{y}-\boldsymbol{\tilde{y}}\right)\right\},
+$$
+
+which we rewrite to a more compact form with the use of the design matrix \textbf{X}
+
+$$
+C(\boldsymbol{\beta})=\frac{1}{n}\left\{\left(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\right)^T\left(\boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\right)\right\}.
+$$
+
+Now, in order to compute the optimal parameters $\beta$, we are going to minimize the cost function by differentiating it with respect to the parameters $\beta$, and setting the resulting equation equal to zero. In other words, we will minimize the distance between the predicted data points, and the target values by solving the following problem
+
+$$
+\frac{\partial C(\boldsymbol{\beta})}{\partial \boldsymbol{\beta}} = 0
+$$
+
+Which results in
+
+$$
+\frac{\partial C(\boldsymbol{\beta})}{\partial \boldsymbol{\beta}} = 0 = \boldsymbol{X}^T\left( \boldsymbol{y}-\boldsymbol{X}\boldsymbol{\beta}\right).
+$$
+
+By applying the rules of matrix mutliplication, we can rewrite the resulting expression as follows
+
+$$
+\boldsymbol{X}^T\boldsymbol{y} = \boldsymbol{X}^T\boldsymbol{X}\boldsymbol{\beta},
+$$
+
+In the simple case where the matrix $X^TX$ is invertible, we can simply solve this equation by multiplying both sides from the left with the inverse of this matrix, $(X^TX)^(-1)$, giving us
+
+$$
+\boldsymbol{\beta} =\left(\boldsymbol{X}^T\boldsymbol{X}\right)^{-1}\boldsymbol{X}^T\boldsymbol{y}.
+$$
+
+\subsubsection{Ridge Regression}
+
+\subsubsection{Lasso Regression}
+
+\subsection{The Data}
+
+\subsection{Preprocessing of Data}
+
+\subsection{Singular Value Decomposition - SVD}
+
+\subsection{Metrics for measurement of performance}
+
+\subsection{Resampling techniques}
+
+\subsubsection{The Bootstrap}
 
 
-Now, in a general linear model, we assume that we can parametrize our function terms of a polynomial of degree \emph{n-1}: 
+\section{Results}
 
-
-\begin{gather*}
-	\textbf{ $y=y(x) \rightarrow y(x_i) = \tilde{y_i} + \epsilon_i = \Sigma_{j=0}^{n-1} 
-						\beta_jx_i^j + \epsilon_i$}
-\end{gather*}
-
-With a little linear algebra, this equation can be rewritten to a simplier form: 
-
-\begin{gather*}
-	\textbf{ $y=X\beta + \epsilon$}
-\end{gather*}
-
-
-\subsection{Ordinary Least Squares}
-
-\subsection{Ridge Regression}
-
-\subsection{Lasso Regression}
-
+\section{Conclussion and discussion of results}
 
 
 \section{Appendix A - Analytical Solution of OLS}
